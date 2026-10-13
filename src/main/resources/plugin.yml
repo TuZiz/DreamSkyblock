@@ -1,0 +1,30 @@
+name: DreamSkyblock
+version: '${version}'
+
+main: ym.dreamSkyblock.DreamSkyblock
+api-version: '26.2'
+load: POSTWORLD
+folia-supported: true
+softdepend:
+  - PlaceholderAPI
+
+commands:
+  home:
+    description: 家园主命令
+    usage: /home <create|tp|invite|accept|deny|leave|delete|settings|help|reload>
+    aliases:
+      - dsb
+    permission: dreamskyblock.use
+
+permissions:
+  dreamskyblock.use:
+    description: 使用家园全部普通功能
+    default: true
+  dreamskyblock.admin:
+    description: 管理 DreamSkyblock 并绕过家园陌生人保护
+    default: op
+    children:
+      dreamskyblock.use: true
+
+authors:
+  - ymxc

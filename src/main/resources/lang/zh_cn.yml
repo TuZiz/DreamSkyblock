@@ -1,0 +1,46 @@
+# 默认简体中文语言文件。所有玩家可见的消息和菜单标题均从此文件读取。
+
+# --- 系统与权限 ---
+player-only: "<#FF6B6B>❌ 只有玩家可以执行此命令。"
+no-permission: "<#FF6B6B>❌ 你没有操作家园的权限。"
+admin-only: "<#FF6B6B>❌ 只有管理员可以重载插件配置。"
+reload.success: "<#1DD1A1>✔ DreamSkyblock 配置已重载。"
+reload.failed: "<#FF6B6B>❌ 配置重载失败，请检查控制台日志。"
+player-not-found: "<#FF6B6B>❓ 找不到该在线玩家。"
+command.usage: "<#C8D6E5>💡 用法: <click:run_command:'/home create'><u><#48DBFB>/home create</#48DBFB></u></click>"
+home.help: "<#74B9FF><b>家园指令</b><newline><#C8D6E5>/home <#48DBFB>进入家园</#48DBFB><newline><#C8D6E5>/home create 模板 <#48DBFB>创建家园</#48DBFB><newline><#C8D6E5>/home tp <#48DBFB>传送回家园</#48DBFB><newline><#C8D6E5>/home invite 玩家 <#48DBFB>邀请共同主人</#48DBFB><newline><#C8D6E5>/home accept Token <#48DBFB>接受邀请</#48DBFB><newline><#C8D6E5>/home deny Token <#48DBFB>拒绝邀请</#48DBFB><newline><#C8D6E5>/home leave <#48DBFB>离开家园</#48DBFB><newline><#C8D6E5>/home settings <#48DBFB>设置家园 Flag</#48DBFB><newline><#C8D6E5>/home delete <#48DBFB>删除无人家园</#48DBFB><newline><#C8D6E5>/home reload <#48DBFB>重载配置（管理员）</#48DBFB>"
+template.not-found: "<#FF6B6B>❓ 找不到指定的家园模板。"
+
+# --- 家园操作 ---
+home.busy: "<#FDCB6E>⏳ 你的家园操作正在处理中，请稍候..."
+home.already-member: "<#FF6B6B>❌ 你已经拥有一个家园，请先输入 <#48DBFB>/home leave</#48DBFB>。"
+home.none: "<#FF6B6B>❌ 你还没有加入任何家园。"
+home.not-owner: "<#FF6B6B>🛡️ 只有家园主人可以执行此操作。"
+home.created: "<#1DD1A1>✨ 家园创建成功: <#00D2D3><template></#00D2D3>"
+home.create-failed: "<#FF6B6B>❌ 家园创建失败，请联系管理员查看日志。"
+home.load-failed: "<#FF6B6B>❌ 家园世界加载失败，请联系管理员查看日志。"
+home.last-owner: "<#FDCB6E>⚠️ 你是最后一名主人，请先邀请他人或直接删除家园。"
+home.left: "<#1DD1A1>👋 你已成功离开家园。"
+home.delete-not-allowed: "<#FF6B6B>❌ 只有家园的最后一名主人可以将其删除。"
+home.deleted: "<#1DD1A1>🗑️ 家园已成功删除。"
+home.delete-failed: "<#FF6B6B>❌ 家园删除失败，请确保该世界内没有其他玩家。"
+
+# --- 邀请系统 ---
+invite.self: "<#FF6B6B>❌ 你不能邀请你自己。"
+invite.target-has-home: "<#FF6B6B>❌ 该玩家已经属于其他家园。"
+invite.full: "<#FF6B6B>👥 家园人数已达到上限。"
+invite.duplicate: "<#FDCB6E>⚠️ 已经向该玩家发送过邀请，请等待对方处理。"
+invite.sent: "<#1DD1A1>✉️ 已成功向 <#00D2D3><player></#00D2D3> 发送邀请。"
+invite.received: "<#74B9FF>📬 <#00D2D3><player></#00D2D3> <#C8D6E5>邀请你加入家园 "
+invite.accept-button: "<#1DD1A1><b>[✔ 接受]</b> "
+invite.deny-button: "<#FF6B6B><b>[✖ 拒绝]</b>"
+invite.accept-hover: "<#C8D6E5>点击接受此邀请"
+invite.accepted: "<#1DD1A1>🎉 欢迎！你已成功加入家园。"
+invite.denied: "<#C8D6E5>🚫 你已拒绝了该邀请。"
+invite.invalid: "<#FF6B6B>❌ 邀请无效或已损坏。"
+invite.expired: "<#FDCB6E>⏳ 该邀请已过期。"
+invite.cannot-accept: "<#FF6B6B>❌ 无法接受！邀请已失效、家园已满或你已拥有家园。"
+invite.token-required: "<#C8D6E5>🔑 请提供有效的邀请 Token。"
+
+# --- GUI 界面 ---
+gui.unavailable: "<#FF6B6B>❌ GUI 菜单暂时不可用，请联系管理员。"

@@ -1,0 +1,38 @@
+Shape:
+  - "#########"
+  - "#   a   #"
+  - "#       #"
+  - "#   b   #"
+  - "####C####"
+title: "<#74B9FF><b>✦ 选择家园模板 ✦</b>"
+components:
+  border:
+    symbol: "#"
+    material: BLACK_STAINED_GLASS_PANE
+    name: "<#2D3436> "
+    lore:
+  skyblock:
+    symbol: a
+    action: create:skyblock
+    material: GRASS_BLOCK
+    name: "<#1DD1A1><b>🏝️ <name></b>"
+    lore:
+      - "<#C8D6E5>▪ 虚空中的小型草地平台，挑战极限生存"
+      - ""
+      - "<#FDCB6E>▶ 点击使用此模板创建家园"
+  vanilla:
+    symbol: b
+    action: create:vanilla
+    material: OAK_SAPLING
+    name: "<#1DD1A1><b>🌲 <name></b>"
+    lore:
+      - "<#C8D6E5>▪ 经典的原版地形生成，适合大型建筑"
+      - ""
+      - "<#FDCB6E>▶ 点击使用此模板创建家园"
+  back:
+    symbol: C
+    action: close
+    material: ARROW
+    name: "<#FF6B6B><b>✖ 返回上一级</b>"
+    lore:
+      - "<#C8D6E5>▪ 关闭模板选择菜单"

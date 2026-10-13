@@ -1,0 +1,12 @@
+# 家园等级基础配置。等级默认无上限；本版本只提供计算和变量，暂不自动获取经验或升级。
+default-level: 1
+progression:
+  # 1 级升 2 级需要的经验；之后每级需求乘以 multiplier。
+  first-upgrade-experience: 1
+  # 每提升 1 级，下一等级经验需求翻倍。
+  multiplier: 2
+border:
+  # 1 级家园边界直径，单位为方块。
+  base-size: 100
+  # 每提升 1 级，边界直径增加值，单位为方块。
+  per-level: 10

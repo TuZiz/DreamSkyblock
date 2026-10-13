@@ -1,0 +1,108 @@
+# 家园模板定义。新增模板只需复制一个 templates 节点。
+templates:
+  skyblock:
+    display-name: "<#55FFFF>空岛家园"
+    description:
+      - "<#B8C7D9>虚空中的小型草地平台"
+    icon: GRASS_BLOCK
+    environment: NORMAL
+    generator: SKYBLOCK
+    center:
+      x: 0
+      y: 100
+      z: 0
+    spawn:
+      x: 0.5
+      y: 101
+      z: 0.5
+    world-border-size: 100
+    difficulty: NORMAL
+    animals: true
+    monsters: true
+    pvp: false
+    keep-inventory: true
+    flight: false
+    weather: false
+    natural-regeneration: true
+    allow-nether-portal: false
+    allow-end-portal: false
+    platform-size: 7
+    platform-y: 100
+    flags:
+      pvp: false
+      monster_spawn: true
+      animal_spawn: true
+      flight: false
+      weather: false
+      stranger_place: false
+      stranger_break: false
+      stranger_container: false
+      stranger_door: false
+      stranger_button: false
+      stranger_pressure_plate: false
+      stranger_block_interact: false
+      stranger_entity_interact: false
+      stranger_attack_animal: false
+      stranger_attack_monster: false
+      stranger_pickup: false
+      stranger_drop: false
+      stranger_bucket: false
+      stranger_vehicle: false
+      fire_spread: false
+      tnt_explosion: false
+      entity_grief: false
+      liquid_flow: true
+      portal_nether: false
+      portal_end: false
+  vanilla:
+    display-name: "<#55FF55>原版世界"
+    description:
+      - "<#B8C7D9>使用 Minecraft 原版地形生成"
+    icon: OAK_SAPLING
+    environment: NORMAL
+    generator: VANILLA
+    center:
+      x: 0
+      y: 80
+      z: 0
+    spawn:
+      x: 0.5
+      y: 80
+      z: 0.5
+    world-border-size: 100
+    difficulty: NORMAL
+    animals: true
+    monsters: true
+    pvp: false
+    keep-inventory: true
+    flight: false
+    weather: true
+    natural-regeneration: true
+    allow-nether-portal: false
+    allow-end-portal: false
+    flags:
+      pvp: false
+      monster_spawn: true
+      animal_spawn: true
+      flight: false
+      weather: true
+      stranger_place: false
+      stranger_break: false
+      stranger_container: false
+      stranger_door: false
+      stranger_button: false
+      stranger_pressure_plate: false
+      stranger_block_interact: false
+      stranger_entity_interact: false
+      stranger_attack_animal: false
+      stranger_attack_monster: false
+      stranger_pickup: false
+      stranger_drop: false
+      stranger_bucket: false
+      stranger_vehicle: false
+      fire_spread: false
+      tnt_explosion: false
+      entity_grief: false
+      liquid_flow: true
+      portal_nether: false
+      portal_end: false
