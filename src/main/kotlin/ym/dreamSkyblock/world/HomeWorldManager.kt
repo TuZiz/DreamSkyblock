@@ -12,10 +12,9 @@ import ym.dreamSkyblock.storage.HomeStorage
 import java.util.UUID
 import java.util.logging.Level
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executor
+import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.function.Consumer
 
 class HomeWorldManager(
     private val plugin: DreamSkyblock,
@@ -30,19 +29,10 @@ class HomeWorldManager(
     private val worldOperations = ConcurrentHashMap.newKeySet<UUID>()
     @Volatile
     private var shuttingDown = false
-    /** Canvas 26.2.940 exposes unloadWorldAsync(World, boolean, Consumer<WorldUnloadResult>). */
-    private val canvasAsyncUnloadMethod = plugin.server.javaClass.methods.firstOrNull { method ->
-        method.name == "unloadWorldAsync" && method.parameterTypes.size == 3 &&
-            World::class.java.isAssignableFrom(method.parameterTypes[0]) &&
-            method.parameterTypes[1] == Boolean::class.javaPrimitiveType &&
-            Consumer::class.java.isAssignableFrom(method.parameterTypes[2])
-    }
-    /** Arbor/Paper-compatible extension used by the existing Folia builds. */
-    private val asyncUnloadMethod = plugin.server.javaClass.methods.firstOrNull { method ->
-        method.name == "unloadWorld" && method.parameterTypes.size == 3 &&
-            World::class.java.isAssignableFrom(method.parameterTypes[0]) &&
-            method.parameterTypes[1] == Boolean::class.javaPrimitiveType &&
-            CompletableFuture::class.java.isAssignableFrom(method.parameterTypes[2])
+    private val unloadAdapter = WorldUnloadAdapter(plugin)
+
+    init {
+        plugin.logger.info("家园世界卸载模式: ${unloadAdapter.mode}")
     }
 
     fun getLoaded(home: Home): World? = loaded[home.id]
@@ -258,112 +248,38 @@ class HomeWorldManager(
             }
 
             val home = loaded.entries.firstOrNull { it.value.uid == world.uid }?.key?.let(records::get)
-            runCatching { world.save(true) }
-                .onFailure { plugin.logger.log(Level.WARNING, "关闭时保存家园世界失败 ${world.name}: ${it.message}", it) }
-            if (home != null) {
-                runCatching { storage.snapshotWorldDirectory(home, plugin.server.worldContainer.toPath()) }
-                    .onFailure { plugin.logger.warning("关闭时保存家园世界副本失败 ${home.id}: ${it.message}") }
-            }
+            val worldName = world.name
+            val worldContainer = plugin.server.worldContainer.toPath()
             unloadWorldDuringShutdown(world) { success ->
                 if (!success) return@unloadWorldDuringShutdown
-                worldGuardConfigCleaner.cleanupWorldAsync(world.name)
+                worldGuardConfigCleaner.cleanupWorldAsync(worldName)
                 if (home == null) loaded.entries.removeIf { it.value.uid == world.uid }
-                else loaded.remove(home.id)
+                else {
+                    loaded.remove(home.id)
+                    try {
+                        ioExecutor.execute {
+                            runCatching { storage.syncWorldDirectory(home, worldContainer) }
+                                .onFailure { plugin.logger.log(Level.WARNING, "关闭时保存家园世界副本失败 ${home.id}: ${it.message}", it) }
+                        }
+                    } catch (error: RejectedExecutionException) {
+                        plugin.logger.log(Level.WARNING, "关闭后家园世界卸载才完成 ${home.id}: IO 执行器已停止，保留运行目录供下次加载恢复", error)
+                    }
+                }
             }
         }
     }
 
-    /**
-     * onDisable 已经禁止以插件身份注册 Folia 任务，因此关闭阶段不能再经过 scheduler。
-     * Arbor/Paper 的异步卸载入口自身负责后续卸载；完成回调只更新本地状态。
-     */
-    private fun unloadWorldDuringShutdown(world: World, done: (Boolean) -> Unit) {
-        if (canvasAsyncUnloadMethod != null) {
-            invokeCanvasUnload(world, true, done)
-            return
-        }
-        val method = asyncUnloadMethod
-        if (method == null) {
-            plugin.logger.warning("当前服务端不提供关闭阶段的异步世界卸载 API，跳过卸载 ${world.name}")
-            return
-        }
-        val future = CompletableFuture<Boolean>()
-        future.whenComplete { success, error ->
-            if (error != null) {
-                plugin.logger.log(Level.WARNING, "关闭时异步卸载家园世界失败 ${world.name}: ${error.message}", error)
-            }
-            done(error == null && success == true)
-        }
-        runCatching { method.invoke(plugin.server, world, true, future) }
-            .onFailure { error ->
-                plugin.logger.log(Level.WARNING, "关闭时提交家园世界卸载失败 ${world.name}: ${error.message}", error)
-                future.complete(false)
-            }
-    }
+    private fun unloadWorldDuringShutdown(world: World, done: (Boolean) -> Unit) =
+        unloadAdapter.unloadDuringShutdown(world, done)
 
     private fun unloadWorldAsync(world: World, save: Boolean, done: (Boolean) -> Unit) {
-        if (shuttingDown || !plugin.isEnabled) {
-            return
-        }
+        if (shuttingDown || !plugin.isEnabled) return
         plugin.server.globalRegionScheduler.execute(plugin) {
-            if (world.players.isNotEmpty()) {
-                done(false)
-                return@execute
+            if (shuttingDown || !plugin.isEnabled) return@execute
+            unloadAdapter.unload(world, save) { success ->
+                if (!shuttingDown && plugin.isEnabled) done(success)
             }
-            if (canvasAsyncUnloadMethod != null) {
-                invokeCanvasUnload(world, save) { success ->
-                    if (shuttingDown || !plugin.isEnabled) return@invokeCanvasUnload
-                    runCatching {
-                        plugin.server.globalRegionScheduler.execute(plugin) { done(success) }
-                    }.onFailure {
-                        plugin.logger.log(Level.WARNING, "提交 Canvas 世界卸载结果回调失败 ${world.name}: ${it.message}", it)
-                        done(false)
-                    }
-                }
-                return@execute
-            }
-            val method = asyncUnloadMethod
-            if (method == null) {
-                plugin.logger.severe("当前服务端不提供 Folia 非阻塞世界卸载 API，已拒绝同步卸载 ${world.name}")
-                done(false)
-                return@execute
-            }
-            val future = CompletableFuture<Boolean>()
-            future.whenComplete { success, error ->
-                if (shuttingDown || !plugin.isEnabled) {
-                    if (error != null) plugin.logger.log(Level.WARNING, "异步卸载家园世界失败 ${world.name}: ${error.message}", error)
-                    return@whenComplete
-                }
-                runCatching {
-                    plugin.server.globalRegionScheduler.execute(plugin) {
-                        if (error != null) plugin.logger.log(Level.SEVERE, "异步卸载家园世界失败 ${world.name}: ${error.message}", error)
-                        if (error == null && success == true) worldGuardConfigCleaner.cleanupWorldAsync(world.name)
-                        done(error == null && success == true)
-                    }
-                }.onFailure { callbackError ->
-                    plugin.logger.log(Level.WARNING, "提交世界卸载结果回调失败 ${world.name}: ${callbackError.message}", callbackError)
-                    done(false)
-                }
-            }
-            runCatching { method.invoke(plugin.server, world, save, future) }
-                .onFailure { error -> future.completeExceptionally(error) }
         }
-    }
-
-    /** Invoke Canvas' optional API without linking the plugin against the Canvas server JAR. */
-    private fun invokeCanvasUnload(world: World, save: Boolean, done: (Boolean) -> Unit) {
-        val method = canvasAsyncUnloadMethod ?: return
-        val callback = Consumer<Any?> { result ->
-            val success = runCatching {
-                result?.javaClass?.getMethod("isSuccess")?.invoke(result) == true
-            }.getOrDefault(false)
-            done(success)
-        }
-        runCatching { method.invoke(plugin.server, world, save, callback) }
-            .onFailure {
-                plugin.logger.log(Level.WARNING, "提交 Canvas 世界卸载失败 ${world.name}: ${it.message}", it)
-                done(false)
-            }
     }
 
     private fun snapshotAndApply(home: Home, template: HomeTemplate, player: Player, world: World, done: (Boolean) -> Unit) {

@@ -65,7 +65,10 @@ class HomeStorage(private val plugin: DreamSkyblock, private val config: ConfigS
 
     fun hasWorldData(home: Home): Boolean {
         val dir = worldDir(home)
-        return Files.isRegularFile(dir.resolve("level.dat")) || Files.isRegularFile(dir.resolve("level.dat_old"))
+        // 26.2 的独立维度将生成设置和 Paper UUID 元数据保存在 data 下。
+        return Files.isRegularFile(dir.resolve("data/minecraft/world_gen_settings.dat")) ||
+            Files.isRegularFile(dir.resolve("data/paper/metadata.dat")) ||
+            Files.isRegularFile(dir.resolve("level.dat")) || Files.isRegularFile(dir.resolve("level.dat_old"))
     }
 
     /** Paper 26.2 only creates worlds in the minecraft namespace. Real data remains under the plugin data folder. */
