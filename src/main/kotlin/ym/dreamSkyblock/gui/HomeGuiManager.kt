@@ -105,7 +105,7 @@ class HomeGuiManager(
             action.startsWith("toggle:") -> {
                 val home = homes.byPlayer(player.uniqueId) ?: return
                 val flag = runCatching { HomeFlag.valueOf(action.removePrefix("toggle:").uppercase()) }.getOrNull() ?: return
-                if (homes.toggleFlag(player, flag)) openSettings(player)
+                homes.toggleFlag(player, flag) { openSettings(player) }
             }
         }
     }

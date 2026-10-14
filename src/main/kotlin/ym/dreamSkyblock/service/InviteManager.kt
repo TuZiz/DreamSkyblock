@@ -47,9 +47,12 @@ class InviteManager(private val plugin: DreamSkyblock, private val config: Confi
         }
         if (!invites.remove(token, invite)) return messages.send(player, "invite.invalid")
         val home = homes.byId(invite.homeId) ?: return messages.send(player, "invite.invalid")
-        if (!homes.addOwner(home, player)) return messages.send(player, "invite.cannot-accept")
-        messages.send(player, "invite.accepted")
-        homes.teleport(player)
+        homes.addOwner(home, player) { ok ->
+            if (player.isOnline) {
+                messages.send(player, if (ok) "invite.accepted" else "invite.cannot-accept")
+                if (ok) homes.teleport(player)
+            }
+        }
     }
 
     fun deny(player: Player, token: String) {
@@ -58,4 +61,7 @@ class InviteManager(private val plugin: DreamSkyblock, private val config: Confi
         if (!invites.remove(token, invite)) return messages.send(player, "invite.invalid")
         messages.send(player, "invite.denied")
     }
+
+    fun invalidate(homeId: UUID) { invites.entries.removeIf { it.value.homeId == homeId } }
+    fun clear() { invites.clear() }
 }

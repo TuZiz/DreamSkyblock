@@ -106,3 +106,4 @@ templates:
       liquid_flow: true
       portal_nether: false
       portal_end: false
+schema-version: 1

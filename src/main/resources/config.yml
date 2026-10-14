@@ -1,6 +1,6 @@
 # DreamSkyblock 全局运行配置。
 storage:
-  # 家园数据目录名称，实际位于 plugins/DreamSkyblock/<目录>/。
+  # 旧版数据目录名称，只用于迁移。当前玩家数据固定为 data/homes.db。
   data-folder: playerdata
 world:
   # 家园无人后延迟卸载时间（秒），最小 5 秒。
@@ -10,3 +10,5 @@ invite-expiry-seconds: 300
 home:
   # V1 主人容量，所有主人拥有相同权限。
   max-members: 4
+# 全局配置；旧 storage.data-folder 仅用于一次性YAML迁移，主数据固定为data/homes.db。
+schema-version: 1

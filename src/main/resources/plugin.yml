@@ -4,14 +4,14 @@ version: '${version}'
 main: ym.dreamSkyblock.DreamSkyblock
 api-version: '26.2'
 load: POSTWORLD
-folia-supported: true
+folia-supported: false
 softdepend:
   - PlaceholderAPI
 
 commands:
   home:
     description: 家园主命令
-    usage: /home <create|tp|invite|accept|deny|leave|delete|settings|help|reload>
+    usage: /home <create|tp|invite|accept|deny|leave|delete|settings|help|reload|backup|restore|migrate>
     aliases:
       - dsb
     permission: dreamskyblock.use

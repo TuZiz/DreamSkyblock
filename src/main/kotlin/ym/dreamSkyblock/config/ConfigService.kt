@@ -43,11 +43,9 @@ class ConfigService(private val plugin: DreamSkyblock) {
 
     fun load() {
         plugin.saveDefaultConfig()
-        plugin.saveResource("templates.yml", false)
-        plugin.saveResource("lang/zh_cn.yml", false)
-        plugin.saveResource("gui/template_selection.yml", false)
-        plugin.saveResource("gui/settings.yml", false)
-        plugin.saveResource("levels.yml", false)
+        listOf("templates.yml", "lang/zh_cn.yml", "gui/template_selection.yml", "gui/settings.yml", "levels.yml").forEach {
+            if (!File(plugin.dataFolder, it).exists()) plugin.saveResource(it, false)
+        }
         apply(readSnapshot())
     }
 
@@ -56,38 +54,56 @@ class ConfigService(private val plugin: DreamSkyblock) {
         plugin.server.asyncScheduler.runNow(plugin) {
             runCatching { readSnapshot() }
                 .onSuccess { snapshot ->
+                    if (!plugin.isEnabled) return@onSuccess
                     plugin.server.globalRegionScheduler.execute(plugin) {
+                        if (!plugin.isEnabled) return@execute
                         apply(snapshot)
                         onSuccess()
                     }
                 }
                 .onFailure { error ->
+                    if (!plugin.isEnabled) return@onFailure
                     plugin.server.globalRegionScheduler.execute(plugin) { onFailure(error) }
                 }
         }
     }
 
     private fun readSnapshot(): Snapshot {
-        val config = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "config.yml"))
+        val config = VersionedYaml.load(File(plugin.dataFolder, "config.yml").toPath())
         val unloadDelaySeconds = config.getLong("world.unload-delay-seconds", 60).coerceAtLeast(5)
         val inviteExpirySeconds = config.getLong("invite-expiry-seconds", 300).coerceAtLeast(10)
         val maxMembers = config.getInt("home.max-members", 4).coerceIn(2, 32)
-        val dataFolderName = config.getString("storage.data-folder", "playerdata")!!.replace(Regex("[^A-Za-z0-9_-]"), "")
-            .ifBlank { "playerdata" }
-        val root = YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "templates.yml"))
+        val dataFolderName = config.getString("storage.data-folder", "playerdata")!!
+        require(dataFolderName.matches(Regex("[A-Za-z0-9_-]+"))) { "config.yml: storage.data-folder 无效: $dataFolderName" }
+        val root = VersionedYaml.load(File(plugin.dataFolder, "templates.yml").toPath())
         val templates = root.getConfigurationSection("templates")?.getKeys(false)?.associateWith { id -> parseTemplate(id, root) }
             ?.filterValues { it != null }?.mapValues { it.value!! } ?: emptyMap()
+        require(templates.isNotEmpty()) { "templates.yml: templates 不能为空" }
         return Snapshot(
             templates,
             unloadDelaySeconds,
             inviteExpirySeconds,
             maxMembers,
             dataFolderName,
-            YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "lang/zh_cn.yml")),
-            YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "gui/template_selection.yml")),
-            YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "gui/settings.yml")),
-            YamlConfiguration.loadConfiguration(File(plugin.dataFolder, "levels.yml"))
+            loadLanguage(),
+            VersionedYaml.load(File(plugin.dataFolder, "gui/template_selection.yml").toPath()),
+            VersionedYaml.load(File(plugin.dataFolder, "gui/settings.yml").toPath()),
+            VersionedYaml.load(File(plugin.dataFolder, "levels.yml").toPath())
         )
+    }
+
+    private fun loadLanguage(): YamlConfiguration {
+        val path = File(plugin.dataFolder, "lang/zh_cn.yml").toPath()
+        val yaml = VersionedYaml.load(path)
+        val required = setOf("home.loading", "home.recovery-required", "home.save-failed", "maintenance.usage", "maintenance.backup", "maintenance.restored", "maintenance.migrated", "maintenance.failed")
+        val missing = required.filterNot(yaml::contains).toSet()
+        if (missing.isNotEmpty()) {
+            val defaults = plugin.getResource("lang/zh_cn.yml")!!.bufferedReader(Charsets.UTF_8).use { it.readLines() }
+            val extra = defaults.filter { it.substringBefore(':') in missing }.joinToString("\n")
+            ym.dreamSkyblock.world.WorldArchiveIO().writeDurable(path, java.nio.file.Files.readString(path).trimEnd() + "\n\n# 空岛数据维护提示\n$extra\n")
+            return VersionedYaml.load(path)
+        }
+        return yaml
     }
 
     private fun apply(snapshot: Snapshot) {
@@ -119,15 +135,17 @@ class ConfigService(private val plugin: DreamSkyblock) {
 
     private fun parseTemplate(id: String, root: YamlConfiguration): HomeTemplate? {
         val path = "templates.$id"
-        val generator = runCatching { HomeTemplate.GeneratorType.valueOf(root.getString("$path.generator", "VANILLA")!!.uppercase()) }.getOrDefault(HomeTemplate.GeneratorType.VANILLA)
-        val env = runCatching { World.Environment.valueOf(root.getString("$path.environment", "NORMAL")!!.uppercase()) }.getOrDefault(World.Environment.NORMAL)
-        val icon = Material.matchMaterial(root.getString("$path.icon", "GRASS_BLOCK")!!) ?: Material.GRASS_BLOCK
+        val generator = runCatching { HomeTemplate.GeneratorType.valueOf(root.getString("$path.generator", "VANILLA")!!.uppercase()) }
+            .getOrElse { throw IllegalArgumentException("templates.yml: $path.generator 无效: ${root.get("$path.generator")}", it) }
+        val env = runCatching { World.Environment.valueOf(root.getString("$path.environment", "NORMAL")!!.uppercase()) }
+            .getOrElse { throw IllegalArgumentException("templates.yml: $path.environment 无效: ${root.get("$path.environment")}", it) }
+        val icon = Material.matchMaterial(root.getString("$path.icon", "GRASS_BLOCK")!!) ?: error("templates.yml: $path.icon 无效: ${root.get("$path.icon")}")
         val center = point(root, "$path.center", 0.0, 100.0, 0.0)
         val spawn = point(root, "$path.spawn", center.x + .5, center.y + 1.0, center.z + .5)
         val values = HomeFlag.entries.associateWith { root.getBoolean("$path.flags.${it.name.lowercase()}", it.defaultValue) }
         return HomeTemplate(
             id, root.getString("$path.display-name", id)!!, root.getStringList("$path.description"), icon, env, generator,
-            center, spawn, root.getDouble("$path.world-border-size", 100.0).coerceIn(16.0, 59_999_968.0),
+            center, spawn, root.getDouble("$path.world-border-size", 100.0).coerceIn(16.0, 384.0),
             runCatching { org.bukkit.Difficulty.valueOf(root.getString("$path.difficulty", "NORMAL")!!.uppercase()) }.getOrDefault(org.bukkit.Difficulty.NORMAL),
             root.getBoolean("$path.animals", true), root.getBoolean("$path.monsters", true), root.getBoolean("$path.pvp", false),
             root.getBoolean("$path.keep-inventory", true), root.getBoolean("$path.flight", false), root.getBoolean("$path.weather", false),

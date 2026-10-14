@@ -41,7 +41,7 @@ class HomeLevelService(private val config: YamlConfiguration) {
     fun nextLevelTotalExperience(level: Int): Long =
         totalExperienceForLevel(level).saturatingAdd(requiredExperienceForNext(level))
 
-    fun borderSizeFor(level: Int): Double = (baseBorderSize + borderPerLevel * (level.coerceAtLeast(1) - 1)).coerceAtMost(59_999_968.0)
+    fun borderSizeFor(level: Int): Double = (baseBorderSize + borderPerLevel * (level.coerceAtLeast(1) - 1)).coerceIn(16.0, 384.0)
 
     fun progress(home: Home): Double {
         val required = requiredExperienceForNext(home.level)

@@ -1,9 +1,10 @@
 # 默认简体中文语言文件。所有玩家可见的消息和菜单标题均从此文件读取。
+schema-version: 1
 
 # --- 系统与权限 ---
 player-only: "<#FF6B6B>❌ 只有玩家可以执行此命令。"
 no-permission: "<#FF6B6B>❌ 你没有操作家园的权限。"
-admin-only: "<#FF6B6B>❌ 只有管理员可以重载插件配置。"
+admin-only: "<#FF6B6B>❌ 只有管理员可以执行此操作。"
 reload.success: "<#1DD1A1>✔ DreamSkyblock 配置已重载。"
 reload.failed: "<#FF6B6B>❌ 配置重载失败，请检查控制台日志。"
 player-not-found: "<#FF6B6B>❓ 找不到该在线玩家。"
@@ -13,6 +14,14 @@ template.not-found: "<#FF6B6B>❓ 找不到指定的家园模板。"
 
 # --- 家园操作 ---
 home.busy: "<#FDCB6E>⏳ 你的家园操作正在处理中，请稍候..."
+home.loading: "<#FDCB6E>⏳ 家园数据正在加载或等待迁移重试，请稍后再试。"
+home.recovery-required: "<#FF6B6B>❌ 家园存档需要恢复，请联系管理员；现有归属及存档已保留。"
+home.save-failed: "<#FF6B6B>❌ 家园数据保存失败，本次操作未生效，请联系管理员。"
+maintenance.usage: "<#C8D6E5>用法：/home backup [home_id] 或 /home restore <home_id> <backup_id> 或 /home migrate"
+maintenance.backup: "<#1DD1A1>家园 <home_id> 已备份，备份标识：<backup_id>"
+maintenance.restored: "<#1DD1A1>家园 <home_id> 的世界及成员数据已恢复。"
+maintenance.migrated: "<#1DD1A1>家园数据初始化及迁移已完成。"
+maintenance.failed: "<#FF6B6B>❌ 家园维护失败，原存档与备份已保留，请检查控制台日志。"
 home.already-member: "<#FF6B6B>❌ 你已经拥有一个家园，请先输入 <#48DBFB>/home leave</#48DBFB>。"
 home.none: "<#FF6B6B>❌ 你还没有加入任何家园。"
 home.not-owner: "<#FF6B6B>🛡️ 只有家园主人可以执行此操作。"

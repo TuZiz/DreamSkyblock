@@ -12,12 +12,14 @@ class Home(
     var level: Int = 1,
     var experience: Long = 0L,
     var borderLevel: Int = 1,
-    var memberLimit: Int = 4
+    var memberLimit: Int = 4,
+    var spawn: HomeTemplate.Point? = null
 ) {
     val owners: MutableSet<UUID> = ConcurrentHashMap.newKeySet()
     val ownerNames: MutableMap<UUID, String> = ConcurrentHashMap()
     val flags: MutableMap<HomeFlag, Boolean> = ConcurrentHashMap()
     @Volatile var loadedWorldName: String? = null
+    @Volatile var status: String = "ACTIVE"
 
     fun isOwner(playerId: UUID): Boolean = owners.contains(playerId)
     fun hasRoom(): Boolean = owners.size < memberLimit

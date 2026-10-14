@@ -1,13 +1,13 @@
 # DreamSkyblock
 
-基于 Kotlin 和 Maven 的 Minecraft 家园插件。
+基于现有 Kotlin + Maven 插件的世界与数据存储重构，保留创建、邀请、团队权限、菜单、等级、传送和 PlaceholderAPI 功能。
 
 ## 构建
 
 - 使用 JDK 25 和 Maven。
 - 当前项目使用 Kotlin 2.3.10，Paper API 固定为 `26.2.build.126-stable`，编译目标为 Java 25。
 - 构建前将 `PlaceholderAPI-2.12.3.jar` 放入项目根目录的 `libs/` 文件夹；当前 `pom.xml` 通过本地路径引用该依赖。
-- 在项目根目录执行 `mvn clean package`，产物位于 `target/`。
+- 在项目根目录执行 `mvn package`，产物为 `target/DreamSkyblock-1.0-SNAPSHOT.jar`。
 
 第三方 JAR、构建产物和 IDE 本地配置不纳入版本控制。
 
@@ -15,14 +15,53 @@
 
 将构建得到的 `target/DreamSkyblock-1.0-SNAPSHOT.jar` 放入服务端的 `plugins/` 目录，服务端需要 Java 25。PlaceholderAPI 为可选运行依赖。
 
-## Purpur 26.2 兼容性
+## 平台与原生存储
 
-- 在 Purpur 26.2 build 2633、Zulu JDK 25.0.2 下通过插件启用、空岛家园创建、无人卸载、数据保存、重新加载、删除和插件禁用时卸载的自动化运行验证。
-- Paper/Purpur 使用标准 `Server.unloadWorld` 接口，由 global 调度器在主线程执行。文件复制与清理由 IO 执行器处理；停止时先保存卸载世界，再异步同步数据目录。
-- 数据存在性检查识别 26.2 的 `data/minecraft/world_gen_settings.dat` 和 `data/paper/metadata.dat`，避免将已经保存的家园误判为无数据。
-- 保留 Canvas/Arbor 异步卸载入口。Folia 类平台缺少受支持的异步卸载扩展时会拒绝卸载，不进入 Paper/Purpur 的主线程路径；本次未实测这些平台。
+支持普通主线程模型的 Paper / Purpur / Leaf 26.2；不声明 Folia 兼容，不使用 Canvas / Arbor 专用卸载接口。实测 Purpur 26.2 build 2633、Leaf 26.2 build 124、Zulu JDK 25.0.2。Leaf build 124 为实验构建，验证范围见 [VALIDATION.md](VALIDATION.md)。
 
-运行验证使用玩家代理对象调用服务层，未覆盖真实玩家传送、GUI 交互和 PlaceholderAPI 联动。
+每个家园有独立 UUID `home_id`，成员按玩家 UUID 关联，名称仅用于显示。世界 Key 为 `dreamskyblock:dreamskyblock_<home_id去横杠>`，通过 Paper `WorldCreator.ofKey` 按需加载。
+
+默认主世界名为 `world` 时，永久存档位于 `world/dimensions/dreamskyblock/dreamskyblock_<home_id去横杠>/`；改过 `level-name` 时使用服务端实际主世界目录。加载和卸载不复制存档。原有空岛模板生成虚空世界，已有原版地形模板继续保留。
+
+无人后按 `config.yml` 的秒数延迟保存、卸载，访客也计入世界人数。每个家园的加载、卸载及维护操作串行执行；升级仅修改边界，最高 384×384，不重新生成地形。
+
+玩家设置、等级、经验、成员、权限、传送点、世界 Key 和生命周期存入 `plugins/DreamSkyblock/data/homes.db`。SQLite 使用独立数据库线程、WAL、FULL 同步、外键和事务。`config.yml` 保存全局运行设置，`levels.yml` 保存升级规则，`templates.yml` 保存世界模板；GUI 和语言文件沿用现有路径。
+
+## 旧数据迁移与恢复
+
+启动自动识别旧 `playerdata/<名称>_<UUID>/home.yml` 及其世界目录，也读取旧 `storage.data-folder` 指定的目录。旧名称目录不再用于运行时存储。
+
+迁移先保留备份，再验证存档和 SHA-256 摘要，成功后才提交 SQLite；旧 YAML 和原始世界保留。26.2 之前的 `level.dat` 世界使用 Paper 官方导入机制。多个不一致来源、重复归属、损坏或缺失存档会明确记录错误，禁止静默选择或生成空世界覆盖。
+
+初始化失败时暂停玩家操作，修复日志指出的问题后执行 `/home migrate` 重试。已迁移 YAML 仅作历史源，不会在重启时覆盖 SQLite 或复活已删除家园。中断创建的家园只有在生成、保存凭据与有效世界均存在时恢复为 ACTIVE，否则保留为 RECOVERY，需管理员恢复备份。
+
+管理员维护命令使用 `dreamskyblock.admin`，普通功能统一使用 `dreamskyblock.use`：
+
+- `/home backup [home_id]`：备份指定家园；玩家省略 ID 时使用自己的家园，控制台需提供 ID。
+- `/home restore <home_id> <backup_id>`：恢复世界与对应元数据，也支持恢复已删除家园。成员已属于其他家园时拒绝恢复。
+- `/home migrate`：重试初始化、迁移和待完成维护事务。
+
+备份在 `plugins/DreamSkyblock/backups/<home_id>/<backup_id>/`，包含 `world/`、`home.yml` 快照和 `manifest.sha256`。备份与恢复要求家园无人；删除沿用玩家操作，允许将唯一在线玩家传送出家园后卸载。
+
+删除先完整备份并移入 `trash/<home_id>/<backup_id>/`，SQLite 保留删除墓碑。恢复先校验备份，用持久操作日志协调世界目录替换与 SQLite 提交；启动时回滚未提交的替换或补齐已提交的恢复。被替换或损坏的原目录保留供诊断。无归属世界只记录告警，不自动删除或猜测归属。
+
+维护日志中的家园 UUID 和备份 UUID 可直接用于恢复命令。不要手工删除 `data/operations` 或 `data/world-transactions` 的待完成记录。手工整服备份应停服后同时备份主世界及插件目录，避免单独复制运行中的 SQLite 主文件而遗漏 WAL。
+
+## 查询 API
+
+其他插件声明 `softdepend: DreamSkyblock`，通过 Bukkit ServicesManager 获取只读服务：
+
+```kotlin
+val api = server.servicesManager.load(DreamSkyblockApi::class.java)
+if (api?.isReady() == true) {
+    val home = api.findHomeByMember(player.uniqueId)
+    val canBuild = home?.let { api.permission(it.homeId, player.uniqueId, "stranger_place") } ?: false
+}
+```
+
+接口位于 `ym.dreamSkyblock.api`，提供家园、成员、团队及 Flag 查询。返回不可变快照，无数据库 IO，可跨线程查询；初始化或恢复未就绪时返回空结果。API 不提供写入接口，调用方不能直接修改 SQLite 或可变内部 Home。
+
+原生保存机制仍可能在突然断电时丢失上次区块保存之后的修改；本重构保留永久存档和维护事务证据，不承诺超出 Minecraft 保存机制的零丢失。
 
 主命令为 `/home`，别名为 `/dsb`。普通玩家权限为 `dreamskyblock.use`，管理权限为 `dreamskyblock.admin`。
 
