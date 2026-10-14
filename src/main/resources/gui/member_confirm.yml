@@ -1,0 +1,60 @@
+# ==========================================
+# 确认成员操作菜单配置
+# Shape 每行 9 格，文本与动作可在此调整
+# ==========================================
+schema-version: 1
+title: "<gradient:#00F2FE:#4FACFE:#FFD700><b>✦ 确认成员操作 ✦</b></gradient>"
+
+Shape:
+  - "+#######+"
+  - "#   I   #"
+  - "#       #"
+  - "# Y   N #"
+  - "+#######+"
+
+labels:
+  leave: "退出团队"
+  remove: "移除成员"
+
+components:
+  border:
+    symbol: "#"
+    material: "CYAN_STAINED_GLASS_PANE"
+    name: "<#00F2FE>✦"
+    lore: []
+
+  corner:
+    symbol: "+"
+    material: "YELLOW_STAINED_GLASS_PANE"
+    name: "<#FFD700>❖"
+    lore: []
+
+  info:
+    symbol: "I"
+    material: "PLAYER_HEAD"
+    name: "<gradient:#FF9A9E:#FECFEF><b>👤 <member></b></gradient>"
+    lore:
+      - "<#2DD4BF>  ∟ 即将执行：<#FFD700><b><member_action></b>"
+      - ""
+      - "<#67E8F9>  * 离开后将失去该空岛的管理权限"
+      - "<#FBBF24>  * 最后一名成员无法直接退出团队"
+
+  yes:
+    symbol: "Y"
+    material: "RED_CONCRETE"
+    name: "<gradient:#FF416C:#FF4B2B><b>✔ 确认<member_action></b></gradient>"
+    lore:
+      - "<#67E8F9>  确认修改空岛成员归属"
+      - ""
+      - "<#FFD700>▸ <b>点击立即执行操作</b>"
+    action: "remove-member"
+
+  no:
+    symbol: "N"
+    material: "LIME_CONCRETE"
+    name: "<gradient:#00FF87:#60EFFF><b>✖ 取消操作</b></gradient>"
+    lore:
+      - "<#5EEAD4>  放弃本次操作，返回成员列表"
+      - ""
+      - "<#FFD700>▸ <b>点击返回成员管理</b>"
+    action: "menu:members"

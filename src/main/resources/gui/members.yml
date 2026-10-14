@@ -1,0 +1,79 @@
+# ==========================================
+# 空岛成员管理配置
+# Shape 每行 9 格，文本与动作可在此调整
+# ==========================================
+schema-version: 1
+title: "<gradient:#00F2FE:#4FACFE:#FFD700><b>✦ 空岛成员管理 ✦</b></gradient>"
+
+Shape:
+  - "+#######+"
+  - "#eeeeeee#"
+  - "#eeeeeee#"
+  - "#eeeeeee#"
+  - "P#I#B###N"
+
+components:
+  border:
+    symbol: "#"
+    material: "CYAN_STAINED_GLASS_PANE"
+    name: "<#00F2FE>✦"
+    lore: []
+
+  corner:
+    symbol: "+"
+    material: "YELLOW_STAINED_GLASS_PANE"
+    name: "<#FFD700>❖"
+    lore: []
+
+  entry:
+    symbol: "e"
+    material: "PLAYER_HEAD"
+    name: "<gradient:#FF9A9E:#FECFEF><b>👤 <member></b></gradient>"
+    lore:
+      - "<#2DD4BF>  ∟ 在线状态：<#00FF87><b><online></b>"
+      - "<#67E8F9>  ∟ 成员身份：<#FFD700>共同主人 · 同等管理权限"
+      - ""
+      - "<#FBBF24>▸ <b>点击管理该成员 / 退出团队</b>"
+    action: "member:<member_id>"
+    repeat: "members"
+
+  previous:
+    symbol: "P"
+    material: "ARROW"
+    name: "<gradient:#00F2FE:#4FACFE><b>◀ 上一页</b></gradient>"
+    lore:
+      - "<#2DD4BF>  ∟ 当前页码：<#FFD700><b><page></b> <#67E8F9>/ <#00FF87><b><pages></b> <#2DD4BF>页"
+      - ""
+      - "<#00F2FE>▸ <b>点击切换至上一页</b>"
+    action: "previous"
+
+  back:
+    symbol: "B"
+    material: "ARROW"
+    name: "<gradient:#F6D365:#FDA085><b>↩ 返回上一级</b></gradient>"
+    lore:
+      - "<#67E8F9>  返回空岛主菜单"
+      - ""
+      - "<#FFD700>▸ <b>点击立即返回</b>"
+    action: "menu:main"
+
+  next:
+    symbol: "N"
+    material: "ARROW"
+    name: "<gradient:#00F2FE:#4FACFE><b>下一页 ▶</b></gradient>"
+    lore:
+      - "<#2DD4BF>  ∟ 当前页码：<#FFD700><b><page></b> <#67E8F9>/ <#00FF87><b><pages></b> <#2DD4BF>页"
+      - ""
+      - "<#00F2FE>▸ <b>点击切换至下一页</b>"
+    action: "next"
+
+  invite:
+    symbol: "I"
+    material: "WRITABLE_BOOK"
+    name: "<gradient:#00FF87:#60EFFF><b>➕ 邀请好友</b></gradient>"
+    lore:
+      - "<#67E8F9>  选择尚未加入空岛的在线玩家"
+      - "<#2DD4BF>  ∟ 当前成员：<#00FF87><b><members></b> <#67E8F9>/ <#FFD700><b><limit></b>"
+      - ""
+      - "<#FFD700>▸ <b>点击打开在线好友列表</b>"
+    action: "menu:invite_players"

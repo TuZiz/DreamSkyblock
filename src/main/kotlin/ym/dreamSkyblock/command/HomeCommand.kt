@@ -22,7 +22,7 @@ class HomeCommand(private val plugin: DreamSkyblock, private val config: ConfigS
                 return true
             }
             config.reloadAsync(
-                { messages.reload(config.messages); plugin.levelService.reload(config.levels); homes.refreshRules(); send(sender, "reload.success") },
+                { gui.closeAll(); messages.reload(config.messages); plugin.levelService.reload(config.levels); homes.refreshRules(); send(sender, "reload.success") },
                 { plugin.logger.warning("配置重载失败: ${it.message}"); send(sender, "reload.failed") }
             )
             return true
@@ -34,13 +34,13 @@ class HomeCommand(private val plugin: DreamSkyblock, private val config: ConfigS
             return true
         }
         if (sub == null) {
-            homes.teleport(sender)
+            gui.openMain(sender)
             return true
         }
         when (sub) {
             "create" -> if (args.size < 2) {
-                if (homes.byPlayer(sender.uniqueId) != null) messages.send(sender, "home.already-member") else gui.openTemplate(sender)
-            } else homes.create(sender, args[1])
+                gui.openConfirm(sender)
+            } else gui.openConfirm(sender, args[1])
             "tp", "teleport" -> homes.teleport(sender)
             "invite" -> {
                 val target = args.getOrNull(1)?.let { sender.server.getPlayerExact(it) }
@@ -51,7 +51,7 @@ class HomeCommand(private val plugin: DreamSkyblock, private val config: ConfigS
             "leave" -> homes.leave(sender)
             "delete" -> homes.delete(sender)
             "settings" -> gui.openSettings(sender)
-            "help" -> messages.send(sender, "home.help")
+            "help" -> gui.openHelp(sender)
             else -> messages.send(sender, "command.usage")
         }
         return true
@@ -63,7 +63,7 @@ class HomeCommand(private val plugin: DreamSkyblock, private val config: ConfigS
             .filter { it.startsWith(args[0], true) }
         2 -> when {
             sender.hasPermission("dreamskyblock.admin") && args[0].lowercase() in setOf("backup", "restore") -> homes.all().map { it.id.toString() }.filter { it.startsWith(args[1], true) }
-            args[0].equals("create", true) -> config.templates.keys.toList()
+            args[0].equals("create", true) -> config.creationTemplates.keys.filter { it.startsWith(args[1], true) }
             args[0].equals("invite", true) -> sender.server.onlinePlayers.map { it.name }.filter { it.startsWith(args[1], true) }
             args[0].equals("accept", true) || args[0].equals("deny", true) ->
                 (sender as? Player)?.let { homes.inviteTokens(it.uniqueId).filter { token -> token.startsWith(args[1], true) } } ?: emptyList()

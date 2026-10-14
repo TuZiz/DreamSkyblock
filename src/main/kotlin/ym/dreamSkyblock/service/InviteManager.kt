@@ -22,6 +22,10 @@ class InviteManager(private val plugin: DreamSkyblock, private val config: Confi
         return invites.values.filter { it.target == target && it.expiresAt.isAfter(now) }.map { it.token }.sorted()
     }
 
+    fun invitationsFor(target: UUID): List<HomeInvite> = tokensFor(target).mapNotNull(invites::get)
+        .filter { invite -> homes.byId(invite.homeId)?.let { it.status == "ACTIVE" && it.isOwner(invite.inviter) } == true }
+        .sortedWith(compareBy(HomeInvite::expiresAt, HomeInvite::token))
+
     fun create(owner: Player, target: Player, home: Home) {
         val now = Instant.now()
         invites.entries.removeIf { it.value.expiresAt.isBefore(now) }
@@ -47,6 +51,7 @@ class InviteManager(private val plugin: DreamSkyblock, private val config: Confi
         }
         if (!invites.remove(token, invite)) return messages.send(player, "invite.invalid")
         val home = homes.byId(invite.homeId) ?: return messages.send(player, "invite.invalid")
+        if (!home.isOwner(invite.inviter)) return messages.send(player, "invite.invalid")
         homes.addOwner(home, player) { ok ->
             if (player.isOnline) {
                 messages.send(player, if (ok) "invite.accepted" else "invite.cannot-accept")

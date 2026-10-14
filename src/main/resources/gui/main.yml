@@ -1,0 +1,74 @@
+# ==========================================
+# 空岛主菜单配置
+# Shape 每行 9 格，文本与动作可在此调整
+# ==========================================
+schema-version: 1
+title: "<gradient:#00F2FE:#4FACFE:#FFD700><b>✦ 空岛 · 星海启航 ✦</b></gradient>"
+
+Shape:
+  - "+###H###+"
+  - "#       #"
+  - "# C   J #"
+  - "#       #"
+  - "+###X###+"
+
+components:
+  border:
+    symbol: "#"
+    material: "CYAN_STAINED_GLASS_PANE"
+    name: "<#00F2FE>✦"
+    lore:
+
+  corner:
+    symbol: "+"
+    material: "YELLOW_STAINED_GLASS_PANE"
+    name: "<#FFD700>❖"
+    lore:
+
+  create:
+    symbol: "C"
+    material: "GRASS_BLOCK"
+    name: "<gradient:#00FF87:#60EFFF><b>🌱 创建岛屿</b></gradient>"
+    lore:
+      - "<#FFD700>❖ 领地开辟"
+      - ""
+      - "<#67E8F9>  <description>"
+      - "<#2DD4BF>  草地平台：<#00FF87><platform> × <platform> <#67E8F9>· 树木与资源箱"
+      - "<#5EEAD4>  在虚空中扩建，打造你的空岛家园"
+      - ""
+      - "<#FBBF24>▸ <b>点击进入创建确认</b>"
+    action: "menu:create_confirm"
+
+  join:
+    symbol: "J"
+    material: "PLAYER_HEAD"
+    name: "<gradient:#FF9A9E:#FECFEF><b>🤝 结伴同行 · 好友空岛</b></gradient>"
+    lore:
+      - "<#FFD700>❖ 星际联机"
+      - ""
+      - "<#38BDF8>  呼朋引伴，与挚友并肩开拓壮丽空岛！"
+      - "<#2DD4BF>  ∟ 待回应邀约：<#FFD700><b><invite_count></b> <#2DD4BF>封"
+      - ""
+      - "<#FBBF24>▸ <b>点击查阅好友邀请函</b>"
+    action: "menu:invites"
+
+  help:
+    symbol: "H"
+    material: "KNOWLEDGE_BOOK"
+    name: "<gradient:#F6D365:#FDA085><b>📖 空岛开拓宝典</b></gradient>"
+    lore:
+      - "<#00F2FE>❖ 萌新指南"
+      - ""
+      - "<#67E8F9>  一站式掌握岛屿创立、好友合建"
+      - "<#5EEAD4>  与领地安全守护的全部核心秘籍！"
+      - ""
+      - "<#FFD700>▸ <b>点击翻阅详细指南</b>"
+    action: "menu:help"
+
+  close:
+    symbol: "X"
+    material: "BARRIER"
+    name: "<gradient:#FF416C:#FF4B2B><b>✖ 暂离星海界面</b></gradient>"
+    lore:
+      - "<#FBBF24>▸ 点击关闭当前菜单"
+    action: "close"

@@ -13,6 +13,8 @@ class MessageService(@Volatile private var messages: YamlConfiguration) {
         this.messages = messages
     }
 
+    fun raw(key: String): String = messages.getString(key) ?: error("lang/zh_cn.yml: 缺少 $key")
+
     fun component(key: String, placeholders: Map<String, String> = emptyMap()): Component {
         val raw = messages.getString(key) ?: "<#FF5555>Missing message: $key"
         return componentRaw(raw, placeholders)

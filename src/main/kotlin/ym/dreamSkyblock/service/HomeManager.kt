@@ -87,7 +87,7 @@ class HomeManager(
     fun create(player: Player, templateId: String) {
         if (!allow(player)) return
         if (byPlayer(player.uniqueId) != null) return messages.send(player, "home.already-member")
-        val template = config.templates[templateId] ?: return messages.send(player, "template.not-found")
+        val template = config.creationTemplates[templateId] ?: return messages.send(player, "template.not-found")
         if (!playerLocks.add(player.uniqueId)) return messages.send(player, "home.busy")
         val home = Home(UUID.randomUUID(), player.name, template.id, template.center, levels.borderSizeFor(levels.initialLevel),
             level = levels.initialLevel, memberLimit = config.maxMembers, spawn = template.spawn)
@@ -164,6 +164,21 @@ class HomeManager(
         if (home.owners.size <= 1) return messages.send(player, "home.last-owner")
         mutate(home, { it.owners.remove(player.uniqueId); it.ownerNames.remove(player.uniqueId) }).whenComplete { _, error -> tasks.global {
             if (player.isOnline) messages.send(player, if (error == null) "home.left" else "home.save-failed")
+        } }
+    }
+
+    fun removeMember(player: Player, member: UUID, done: () -> Unit) {
+        if (!allow(player)) return
+        val home = byPlayer(player.uniqueId) ?: return messages.send(player, "home.none")
+        if (!available(home)) return messages.send(player, "home.busy")
+        if (!home.isOwner(player.uniqueId) || !home.isOwner(member) || member == player.uniqueId) return
+        val name = home.ownerNames[member] ?: member.toString()
+        mutate(home, { it.owners.remove(member); it.ownerNames.remove(member) }).whenComplete { _, error -> tasks.global {
+            if (error == null) invites.invalidate(home.id)
+            if (player.isOnline) {
+                messages.send(player, if (error == null) "member.removed" else "home.save-failed", mapOf("member" to name))
+                if (error == null) done()
+            }
         } }
     }
 

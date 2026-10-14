@@ -1,0 +1,99 @@
+# ==========================================
+# 我的空岛主菜单配置
+# Shape 每行 9 格，文本与动作可在此调整
+# ==========================================
+schema-version: 1
+title: "<gradient:#00F2FE:#4FACFE:#FFD700><b>✦ 我的空岛 ✦</b></gradient>"
+
+Shape:
+  - "+###I###H"
+  - "# M S U #"
+  - "#   T   #"
+  - "#       #"
+  - "+###X###+"
+
+components:
+  border:
+    symbol: "#"
+    material: "CYAN_STAINED_GLASS_PANE"
+    name: "<#00F2FE>✦"
+    lore: []
+
+  corner:
+    symbol: "+"
+    material: "YELLOW_STAINED_GLASS_PANE"
+    name: "<#FFD700>❖"
+    lore: []
+
+  info:
+    symbol: "I"
+    material: "GRASS_BLOCK"
+    name: "<gradient:#00FF87:#60EFFF><b>🌱 我的空岛信息</b></gradient>"
+    lore:
+      - "<#2DD4BF>  ∟ 初始主人：<#FFD700><b><owner></b>"
+      - "<#2DD4BF>  ∟ 空岛等级：<#00FF87><b><level></b>"
+      - "<#2DD4BF>  ∟ 建造边界：<#00F2FE><b><border> × <border></b>"
+      - "<#2DD4BF>  ∟ 共同成员：<#00FF87><b><members></b> <#67E8F9>/ <#FFD700><b><limit></b>"
+      - "<#2DD4BF>  ∟ 当前状态：<#00FF87><b><state></b>"
+
+  members:
+    symbol: "M"
+    material: "PLAYER_HEAD"
+    name: "<gradient:#FF9A9E:#FECFEF><b>🤝 成员管理</b></gradient>"
+    lore:
+      - "<#67E8F9>  查看成员、邀请在线好友与退出团队"
+      - "<#5EEAD4>  共同主人拥有相同的管理权限"
+      - ""
+      - "<#FFD700>▸ <b>点击打开成员管理</b>"
+    action: "menu:members"
+
+  settings:
+    symbol: "S"
+    material: "COMPARATOR"
+    name: "<gradient:#00F2FE:#4FACFE><b>⚙️ 空岛设置</b></gradient>"
+    lore:
+      - "<#67E8F9>  管理世界规则与访客互动权限"
+      - ""
+      - "<#00F2FE>▸ <b>点击打开空岛设置</b>"
+    action: "menu:settings"
+
+  help:
+    symbol: "H"
+    material: "KNOWLEDGE_BOOK"
+    name: "<gradient:#F6D365:#FDA085><b>📖 帮助中心</b></gradient>"
+    lore:
+      - "<#67E8F9>  按分类了解空岛各项功能说明"
+      - ""
+      - "<#FFD700>▸ <b>点击查看帮助</b>"
+    action: "menu:help"
+
+  upgrade:
+    symbol: "U"
+    material: "EXPERIENCE_BOTTLE"
+    name: "<gradient:#F6D365:#FDA085><b>✨ 空岛升级信息</b></gradient>"
+    lore:
+      - "<#2DD4BF>  ∟ 当前等级：<#FFD700><b><level></b>"
+      - "<#2DD4BF>  ∟ 累计经验：<#00FF87><b><experience></b>"
+      - "<#2DD4BF>  ∟ 下一级经验需求：<#00F2FE><b><required></b>"
+      - "<#2DD4BF>  ∟ 最高建造边界：<#00FF87><b>384 × 384</b>"
+      - ""
+      - "<#FBBF24>  * 升级功能暂未开放"
+    action: "upgrade"
+
+  teleport:
+    symbol: "T"
+    material: "ENDER_PEARL"
+    name: "<gradient:#00FF87:#60EFFF><b>🏡 回到空岛</b></gradient>"
+    lore:
+      - "<#67E8F9>  传送到空岛的家园传送点"
+      - ""
+      - "<#FFD700>▸ <b>点击立即传送</b>"
+    action: "teleport"
+
+  close:
+    symbol: "X"
+    material: "BARRIER"
+    name: "<gradient:#FF416C:#FF4B2B><b>✖ 关闭菜单</b></gradient>"
+    lore:
+      - "<#FBBF24>▸ 点击关闭当前界面"
+    action: "close"

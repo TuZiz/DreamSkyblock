@@ -1,0 +1,73 @@
+# ==========================================
+# 好友岛屿邀请列表配置
+# Shape 每行 9 格，文本与动作可在此调整
+# ==========================================
+schema-version: 1
+title: "<gradient:#00F2FE:#4FACFE:#FFD700><b>✦ 空岛 · 星际同行邀约 ✦</b></gradient>"
+
+Shape:
+  - "+#######+"
+  - "#eeeeeee#"
+  - "#eeeeeee#"
+  - "#eeeeeee#"
+  - "P###B###N"
+
+components:
+  border:
+    symbol: "#"
+    material: "CYAN_STAINED_GLASS_PANE"
+    name: "<#00F2FE>✦"
+    lore: []
+
+  corner:
+    symbol: "+"
+    material: "YELLOW_STAINED_GLASS_PANE"
+    name: "<#FFD700>❖"
+    lore: []
+
+  entry:
+    symbol: "e"
+    material: "PLAYER_HEAD"
+    name: "<gradient:#FF9A9E:#FECFEF><b>💌 来自 <inviter> 的星海邀约</b></gradient>"
+    lore:
+      - "<#FFD700>❖ 邀约详情"
+      - "<#2DD4BF>  ∟ 团队规模：<#00FF87><b><members></b> <#67E8F9>/ <#FFD700><b><limit></b> <#2DD4BF>人"
+      - "<#2DD4BF>  ∟ 剩余时效：<#FFD700><b><seconds></b> <#2DD4BF>秒"
+      - ""
+      - "<#67E8F9>  ★ 缔结盟约后将共享该空岛主人权限！"
+      - ""
+      - "<#00FF87>▸ <b>点击接受邀约并立即传送登岛</b>"
+    action: "accept:<token>"
+    repeat: "invites"
+
+  previous:
+    symbol: "P"
+    material: "ARROW"
+    name: "<gradient:#00F2FE:#4FACFE><b>◀ 上一页</b></gradient>"
+    lore:
+      - "<#67E8F9>  翻阅前页的好友邀约"
+      - "<#2DD4BF>  ∟ 当前页码：<#FFD700><b><page></b> <#67E8F9>/ <#00FF87><b><pages></b> <#2DD4BF>页"
+      - ""
+      - "<#00F2FE>▸ <b>点击切换至上一页</b>"
+    action: "previous"
+
+  back:
+    symbol: "B"
+    material: "ARROW"
+    name: "<gradient:#F6D365:#FDA085><b>↩ 返回星海主菜单</b></gradient>"
+    lore:
+      - "<#67E8F9>  回到空岛引导主界面"
+      - ""
+      - "<#FFD700>▸ <b>点击立即返回</b>"
+    action: "menu:main"
+
+  next:
+    symbol: "N"
+    material: "ARROW"
+    name: "<gradient:#00F2FE:#4FACFE><b>下一页 ▶</b></gradient>"
+    lore:
+      - "<#67E8F9>  翻阅后页的好友邀约"
+      - "<#2DD4BF>  ∟ 当前页码：<#FFD700><b><page></b> <#67E8F9>/ <#00FF87><b><pages></b> <#2DD4BF>页"
+      - ""
+      - "<#00F2FE>▸ <b>点击切换至下一页</b>"
+    action: "next"

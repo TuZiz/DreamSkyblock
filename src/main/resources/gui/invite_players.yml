@@ -1,0 +1,71 @@
+# ==========================================
+# 邀请在线好友菜单配置
+# Shape 每行 9 格，文本与动作可在此调整
+# ==========================================
+schema-version: 1
+title: "<gradient:#00F2FE:#4FACFE:#FFD700><b>✦ 空岛 · 招募星海同伴 ✦</b></gradient>"
+
+Shape:
+  - "+#######+"
+  - "#eeeeeee#"
+  - "#eeeeeee#"
+  - "#eeeeeee#"
+  - "P###B###N"
+
+components:
+  border:
+    symbol: "#"
+    material: "CYAN_STAINED_GLASS_PANE"
+    name: "<#00F2FE>✦"
+    lore: []
+
+  corner:
+    symbol: "+"
+    material: "YELLOW_STAINED_GLASS_PANE"
+    name: "<#FFD700>❖"
+    lore: []
+
+  entry:
+    symbol: "e"
+    material: "PLAYER_HEAD"
+    name: "<gradient:#FF9A9E:#FECFEF><b>✨ 开拓者 · <target></b></gradient>"
+    lore:
+      - "<#FFD700>❖ 招募状态"
+      - "<#2DD4BF>  ∟ 当前状态：<#00FF87><b>自由身（未归属其他空岛）</b>"
+      - "<#67E8F9>  ★ 发送邀约后，对方同意即可并肩建设领地！"
+      - ""
+      - "<#FFD700>▸ <b>点击向该玩家发送星海邀约</b>"
+    action: "invite:<target_id>"
+    repeat: "players"
+
+  previous:
+    symbol: "P"
+    material: "ARROW"
+    name: "<gradient:#00F2FE:#4FACFE><b>◀ 上一页</b></gradient>"
+    lore:
+      - "<#67E8F9>  翻阅前页的在线玩家列表"
+      - "<#2DD4BF>  ∟ 当前页码：<#FFD700><b><page></b> <#67E8F9>/ <#00FF87><b><pages></b> <#2DD4BF>页"
+      - ""
+      - "<#00F2FE>▸ <b>点击切换至上一页</b>"
+    action: "previous"
+
+  back:
+    symbol: "B"
+    material: "ARROW"
+    name: "<gradient:#F6D365:#FDA085><b>↩ 返回成员管理</b></gradient>"
+    lore:
+      - "<#67E8F9>  回到空岛团队与成员管理界面"
+      - ""
+      - "<#FFD700>▸ <b>点击立即返回</b>"
+    action: "menu:members"
+
+  next:
+    symbol: "N"
+    material: "ARROW"
+    name: "<gradient:#00F2FE:#4FACFE><b>下一页 ▶</b></gradient>"
+    lore:
+      - "<#67E8F9>  翻阅后页的在线玩家列表"
+      - "<#2DD4BF>  ∟ 当前页码：<#FFD700><b><page></b> <#67E8F9>/ <#00FF87><b><pages></b> <#2DD4BF>页"
+      - ""
+      - "<#00F2FE>▸ <b>点击切换至下一页</b>"
+    action: "next"

@@ -34,6 +34,7 @@ class DreamSkyblock : JavaPlugin() {
         private set
     private var storage: HomeStorage? = null
     private var expansion: DreamSkyblockExpansion? = null
+    private var gui: HomeGuiManager? = null
     private val ioExecutor = Executors.newFixedThreadPool(2) { runnable -> Thread(runnable, "DreamSkyblock-IO").apply { isDaemon = false } }
     @Volatile private var stopping = false
 
@@ -67,14 +68,14 @@ class DreamSkyblock : JavaPlugin() {
         val migration = LegacyHomeMigration(this, configService, database, files, ioExecutor)
         val maintenance = HomeMaintenanceService(database, files, worldManager, dataFolder.toPath(), ioExecutor)
         homeManager = HomeManager(this, configService, database, worldManager, levelService, messages, ioExecutor, migration, maintenance)
-        val gui = HomeGuiManager(this, configService, homeManager, messages)
+        val gui = HomeGuiManager(this, configService, homeManager, messages).also { this.gui = it }
         val command = HomeCommand(this, configService, homeManager, gui, messages)
         getCommand("home")?.apply { setExecutor(command); setTabCompleter(command) }
         server.pluginManager.registerEvents(HomeProtectionListener(homeManager, worldManager), this)
         server.pluginManager.registerEvents(HomeOccupancyListener(homeManager, worldManager, configService), this)
         server.pluginManager.registerEvents(object : Listener {
             @org.bukkit.event.EventHandler fun onClick(event: org.bukkit.event.inventory.InventoryClickEvent) = gui.click(event)
-            @org.bukkit.event.EventHandler fun onClose(event: org.bukkit.event.inventory.InventoryCloseEvent) = gui.close(event)
+            @org.bukkit.event.EventHandler fun onDrag(event: org.bukkit.event.inventory.InventoryDragEvent) = gui.drag(event)
         }, this)
         server.servicesManager.register(DreamSkyblockApi::class.java, DefaultDreamSkyblockApi(homeManager), this, ServicePriority.Normal)
         if (server.pluginManager.isPluginEnabled("PlaceholderAPI")) expansion = DreamSkyblockExpansion(this, levelService).also { it.register() }
@@ -88,6 +89,7 @@ class DreamSkyblock : JavaPlugin() {
 
     override fun onDisable() {
         stopping = true
+        gui?.closeAll(); gui = null
         if (::worldManager.isInitialized) worldManager.shutdown()
         if (::homeManager.isInitialized) homeManager.shutdown()
         expansion?.unregister(); expansion = null

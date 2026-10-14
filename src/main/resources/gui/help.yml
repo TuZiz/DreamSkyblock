@@ -1,0 +1,108 @@
+# ==========================================
+# 空岛帮助中心配置
+# 帮助只使用此菜单；将鼠标放在分类按钮上查看 Lore 说明
+# ==========================================
+schema-version: 1
+title: "<gradient:#00F2FE:#4FACFE:#FFD700><b>✦ 空岛 · 开拓者百科全书 ✦</b></gradient>"
+
+Shape:
+  - "+#######+"
+  - "# A B C #"
+  - "#       #"
+  - "#   D   #"
+  - "+###R###+"
+
+components:
+  border:
+    symbol: "#"
+    material: "CYAN_STAINED_GLASS_PANE"
+    name: "<#00F2FE>✦"
+    lore: []
+
+  corner:
+    symbol: "+"
+    material: "YELLOW_STAINED_GLASS_PANE"
+    name: "<#FFD700>❖"
+    lore: []
+
+  start:
+    symbol: "A"
+    material: "GRASS_BLOCK"
+    name: "<gradient:#00FF87:#60EFFF><b>🌱 启航指南 · 入门与玩法</b></gradient>"
+    lore:
+      - "<#FFD700>❖ 领地开辟与起步"
+      - "<#67E8F9>  ▸ 在主菜单点击唤醒空岛，二次确认即可创建"
+      - "<#5EEAD4>  ▸ 每位开拓者仅限创建或加入 <#FFD700><b>1</b> <#5EEAD4>座专属空岛"
+      - "<#67E8F9>  ▸ 善用初始草地、树木与补给箱开启星海生存"
+      - "<#5EEAD4>  ▸ 扩建领地时请留意边界，当心失足坠入虚空！"
+      - ""
+      - "<#00F2FE>❖ 传送与快捷指令"
+      - "<#67E8F9>  ▸ 主菜单点击回岛，或输入 <#FFD700>/home tp <#67E8F9>极速归家"
+      - "<#5EEAD4>  ▸ 领地休眠时将自动唤醒加载并安全传送"
+      - "<#2DD4BF>  ∟ <#FFD700>/home <#67E8F9>· 呼出空岛星海主菜单"
+      - "<#2DD4BF>  ∟ <#FFD700>/home create <#67E8F9>· 打开岛屿创建确认界面"
+      - "<#2DD4BF>  ∟ <#FFD700>/home help <#67E8F9>· 随时查阅本开拓宝典"
+
+  team:
+    symbol: "B"
+    material: "PLAYER_HEAD"
+    name: "<gradient:#FF9A9E:#FECFEF><b>🤝 星际联机 · 好友与团队</b></gradient>"
+    lore:
+      - "<#FFD700>❖ 邀约与结伴同行"
+      - "<#67E8F9>  ▸ 可在成员管理中邀请在线且无岛的挚友"
+      - "<#5EEAD4>  ▸ 快捷指令：<#FFD700>/home invite 玩家名"
+      - "<#67E8F9>  ▸ 受邀方可在主菜单查看邀请人、规模与时效"
+      - "<#5EEAD4>  ▸ 点击同意后即刻缔结盟约，并传送至好友空岛！"
+      - ""
+      - "<#00F2FE>❖ 团队管理与离岛规则"
+      - "<#67E8F9>  ▸ 团队成员享有同等的领地建造与管理权限"
+      - "<#5EEAD4>  ▸ 在列表中点击其他成员并确认，即可将其请离"
+      - "<#67E8F9>  ▸ 点击自身头像确认退出，或输入 <#FFD700>/home leave"
+      - "<#FBBF24>  ★ 独行岛主若需离岛，请先邀请新成员接管，"
+      - "<#FBBF24>    或使用 <#FFD700>/home delete <#FBBF24>彻底销毁当前空岛"
+
+  settings:
+    symbol: "C"
+    material: "COMPARATOR"
+    name: "<gradient:#00F2FE:#4FACFE><b>⚙️ 领地法则 · 权限与设置</b></gradient>"
+    lore:
+      - "<#FFD700>❖ 世界自然法则"
+      - "<#67E8F9>  ▸ 主菜单进入空岛设置，可自由调控 <#FFD700>PVP / 生物 / 天气"
+      - "<#5EEAD4>  ▸ 快捷指令：<#FFD700>/home settings <#5EEAD4>直达控制台"
+      - "<#67E8F9>  ▸ 调整并保存后，新法则将即刻在空岛世界生效"
+      - ""
+      - "<#00F2FE>❖ 成员与访客护盾"
+      - "<#67E8F9>  ▸ 岛屿成员共享核心权限，可共同调配空岛设置"
+      - "<#5EEAD4>  ▸ 访客的<#FFD700>放置、破坏、容器与实体交互<#5EEAD4>均可独立开关"
+      - "<#67E8F9>  ▸ 尚未拥有空岛时，仅可预览各项法则说明"
+      - ""
+      - "<#00FF87>❖ 智能云端守护"
+      - "<#5EEAD4>  ▸ 岛上无人时将自动休眠存盘，再次造访即刻无缝还原！"
+
+  levels:
+    symbol: "D"
+    material: "EXPERIENCE_BOTTLE"
+    name: "<gradient:#F6D365:#FDA085><b>✨ 星域扩张 · 等级与边界</b></gradient>"
+    lore:
+      - "<#FFD700>❖ 岛屿星级档案"
+      - "<#67E8F9>  ▸ 可在主菜单升级信息中实时追踪发展进度"
+      - "<#2DD4BF>  ∟ 当前空岛等级：<#FFD700><b><level> 级</b>"
+      - "<#2DD4BF>  ∟ 累计开拓经验：<#00FF87><b><experience> 点</b>"
+      - ""
+      - "<#00F2FE>❖ 领地建造边界"
+      - "<#2DD4BF>  ∟ 当前星域范围：<#FFD700><b><border> × <border></b>"
+      - "<#67E8F9>  ▸ 最高支持扩展至 <#00FF87><b>384 × 384</b> <#67E8F9>超大星域"
+      - "<#5EEAD4>  ▸ 边界扩张时将完美保留现有宏伟建筑与世界存档"
+      - ""
+      - "<#FBBF24>❖ 升阶通道状态"
+      - "<#67E8F9>  ▸ 当前展示实时开拓数据，升阶突破功能敬请期待！"
+
+  back:
+    symbol: "R"
+    material: "ARROW"
+    name: "<gradient:#F6D365:#FDA085><b>↩ 返回星海主菜单</b></gradient>"
+    lore:
+      - "<#67E8F9>  回到空岛引导主界面"
+      - ""
+      - "<#FFD700>▸ <b>点击立即返回</b>"
+    action: "menu:main"

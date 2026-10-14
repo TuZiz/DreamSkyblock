@@ -6,6 +6,7 @@ import org.bukkit.configuration.file.YamlConfiguration
 import ym.dreamSkyblock.DreamSkyblock
 import ym.dreamSkyblock.model.HomeFlag
 import ym.dreamSkyblock.model.HomeTemplate
+import ym.dreamSkyblock.gui.HomeMenu
 import java.io.File
 
 class ConfigService(private val plugin: DreamSkyblock) {
@@ -16,8 +17,7 @@ class ConfigService(private val plugin: DreamSkyblock) {
         val maxMembers: Int,
         val dataFolderName: String,
         val messages: YamlConfiguration,
-        val templateGui: YamlConfiguration,
-        val settingsGui: YamlConfiguration,
+        val menus: Map<HomeMenu, YamlConfiguration>,
         val levels: YamlConfiguration
     )
 
@@ -34,22 +34,21 @@ class ConfigService(private val plugin: DreamSkyblock) {
 
     lateinit var messages: YamlConfiguration
         private set
-    lateinit var templateGui: YamlConfiguration
+    lateinit var menus: Map<HomeMenu, YamlConfiguration>
         private set
-    lateinit var settingsGui: YamlConfiguration
-        private set
+    val creationTemplates: Map<String, HomeTemplate> get() = templates.filterValues { it.generator == HomeTemplate.GeneratorType.SKYBLOCK }
     lateinit var levels: YamlConfiguration
         private set
 
     fun load() {
         plugin.saveDefaultConfig()
-        listOf("templates.yml", "lang/zh_cn.yml", "gui/template_selection.yml", "gui/settings.yml", "levels.yml").forEach {
+        listOf("templates.yml", "retired_templates.yml", "lang/zh_cn.yml", "levels.yml").forEach {
             if (!File(plugin.dataFolder, it).exists()) plugin.saveResource(it, false)
         }
         apply(readSnapshot())
     }
 
-    /** 在异步线程读取文件，读取完成后回到 Folia 全局线程应用配置。 */
+    /** 在异步线程读取文件，读取完成后回到 Paper 主线程应用配置。 */
     fun reloadAsync(onSuccess: () -> Unit, onFailure: (Throwable) -> Unit) {
         plugin.server.asyncScheduler.runNow(plugin) {
             runCatching { readSnapshot() }
@@ -76,9 +75,12 @@ class ConfigService(private val plugin: DreamSkyblock) {
         val dataFolderName = config.getString("storage.data-folder", "playerdata")!!
         require(dataFolderName.matches(Regex("[A-Za-z0-9_-]+"))) { "config.yml: storage.data-folder 无效: $dataFolderName" }
         val root = VersionedYaml.load(File(plugin.dataFolder, "templates.yml").toPath())
-        val templates = root.getConfigurationSection("templates")?.getKeys(false)?.associateWith { id -> parseTemplate(id, root) }
+        val configured = root.getConfigurationSection("templates")?.getKeys(false)?.associateWith { id -> parseTemplate(id, root) }
             ?.filterValues { it != null }?.mapValues { it.value!! } ?: emptyMap()
-        require(templates.isNotEmpty()) { "templates.yml: templates 不能为空" }
+        require(configured.values.any { it.generator == HomeTemplate.GeneratorType.SKYBLOCK }) { "templates.yml: templates 必须包含空岛模板" }
+        val retired = VersionedYaml.load(File(plugin.dataFolder, "retired_templates.yml").toPath())
+        val legacy = retired.getConfigurationSection("templates")?.getKeys(false)?.associateWith { id -> parseTemplate(id, retired)!! } ?: emptyMap()
+        val templates = legacy + configured
         return Snapshot(
             templates,
             unloadDelaySeconds,
@@ -86,8 +88,7 @@ class ConfigService(private val plugin: DreamSkyblock) {
             maxMembers,
             dataFolderName,
             loadLanguage(),
-            VersionedYaml.load(File(plugin.dataFolder, "gui/template_selection.yml").toPath()),
-            VersionedYaml.load(File(plugin.dataFolder, "gui/settings.yml").toPath()),
+            HomeGuiConfig(plugin).load(),
             VersionedYaml.load(File(plugin.dataFolder, "levels.yml").toPath())
         )
     }
@@ -95,10 +96,10 @@ class ConfigService(private val plugin: DreamSkyblock) {
     private fun loadLanguage(): YamlConfiguration {
         val path = File(plugin.dataFolder, "lang/zh_cn.yml").toPath()
         val yaml = VersionedYaml.load(path)
-        val required = setOf("home.loading", "home.recovery-required", "home.save-failed", "maintenance.usage", "maintenance.backup", "maintenance.restored", "maintenance.migrated", "maintenance.failed")
+        val defaults = plugin.getResource("lang/zh_cn.yml")!!.bufferedReader(Charsets.UTF_8).use { it.readLines() }
+        val required = defaults.filter { it.isNotBlank() && !it.startsWith("#") && !it.startsWith(" ") }.map { it.substringBefore(':') }.toSet()
         val missing = required.filterNot(yaml::contains).toSet()
         if (missing.isNotEmpty()) {
-            val defaults = plugin.getResource("lang/zh_cn.yml")!!.bufferedReader(Charsets.UTF_8).use { it.readLines() }
             val extra = defaults.filter { it.substringBefore(':') in missing }.joinToString("\n")
             ym.dreamSkyblock.world.WorldArchiveIO().writeDurable(path, java.nio.file.Files.readString(path).trimEnd() + "\n\n# 空岛数据维护提示\n$extra\n")
             return VersionedYaml.load(path)
@@ -113,24 +114,8 @@ class ConfigService(private val plugin: DreamSkyblock) {
         maxMembers = snapshot.maxMembers
         dataFolderName = snapshot.dataFolderName
         messages = snapshot.messages
-        templateGui = snapshot.templateGui
-        settingsGui = snapshot.settingsGui
+        menus = snapshot.menus
         levels = snapshot.levels
-        migrateLegacySettingsShape(settingsGui)
-    }
-
-    /** 仅迁移 V1 旧默认布局到新布局，不写回文件，避免清除管理员注释。 */
-    private fun migrateLegacySettingsShape(gui: YamlConfiguration) {
-        val shape = gui.getStringList("Shape")
-        if (shape.size == 6 && shape[4] == "#vwxyzA #" && shape[5] == "####C####") {
-            gui.set("Shape", listOf("#########", "#abcdefg#", "#hijklmn#", "#opqrstu#", "#vwxyz  #", "####A####"))
-            gui.set("components.C", null)
-        }
-        // keep_inventory is a world gamerule and is no longer player-configurable.
-        if (gui.isConfigurationSection("components.keep_inventory")) {
-            gui.set("Shape", gui.getStringList("Shape").map { it.replace('d', ' ') })
-            gui.set("components.keep_inventory", null)
-        }
     }
 
     private fun parseTemplate(id: String, root: YamlConfiguration): HomeTemplate? {

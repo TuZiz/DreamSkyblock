@@ -1,13 +1,16 @@
+schema-version: 1
 # 家园 Flag 设置菜单，所有旗标均可由此配置和切换。
 Shape:
   - "#########"
   - "#abcefg #"
   - "#hijklmn#"
   - "#opqrstu#"
-  - "#vwxyz  #"
+  - "#vwxyz ?#"
   - "####A####"
-title: "<#74B9FF><b>⚙ 家园设置</b>"
+title: "<#74B9FF><b>空岛权限与设置</b>"
 status:
+  preview: "<#FBBF24>当前为说明预览，加入空岛后可修改"
+  manage: "<#34D399>点击设置按钮切换，提交成功后生效"
   enabled: "<#1DD1A1>✔ 开启"
   disabled: "<#FF6B6B>✖ 关闭"
 components:
@@ -243,8 +246,18 @@ components:
       - "<#FDCB6E>▶ 点击即可切换状态"
   back:
     symbol: A
-    action: close
+    action: menu:main
     material: ARROW
-    name: "<#FF6B6B><b>✖ 关闭设置</b>"
+    name: "<#FF6B6B><b>返回空岛主菜单</b>"
     lore:
-      - "<#C8D6E5>▪ 保存更改并关闭菜单"
+      - "<#C8D6E5>▪ 返回我的空岛，已提交的更改保持生效"
+  guide:
+    symbol: "?"
+    material: BOOK
+    name: "<#FBBF24><b>权限与设置说明</b>"
+    lore:
+      - "<#CBD5E1>世界规则控制 PVP、生物生成与天气等"
+      - "<#CBD5E1>访客权限可分别开放方块、容器与实体互动"
+      - "<#CBD5E1>团队成员拥有同等管理与建造权限"
+      - "<#CBD5E1>空岛无人后保存，重访会加载同一份存档"
+      - "<settings_access>"

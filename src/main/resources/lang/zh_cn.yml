@@ -9,7 +9,7 @@ reload.success: "<#1DD1A1>✔ DreamSkyblock 配置已重载。"
 reload.failed: "<#FF6B6B>❌ 配置重载失败，请检查控制台日志。"
 player-not-found: "<#FF6B6B>❓ 找不到该在线玩家。"
 command.usage: "<#C8D6E5>💡 用法: <click:run_command:'/home create'><u><#48DBFB>/home create</#48DBFB></u></click>"
-home.help: "<#74B9FF><b>家园指令</b><newline><#C8D6E5>/home <#48DBFB>进入家园</#48DBFB><newline><#C8D6E5>/home create 模板 <#48DBFB>创建家园</#48DBFB><newline><#C8D6E5>/home tp <#48DBFB>传送回家园</#48DBFB><newline><#C8D6E5>/home invite 玩家 <#48DBFB>邀请共同主人</#48DBFB><newline><#C8D6E5>/home accept Token <#48DBFB>接受邀请</#48DBFB><newline><#C8D6E5>/home deny Token <#48DBFB>拒绝邀请</#48DBFB><newline><#C8D6E5>/home leave <#48DBFB>离开家园</#48DBFB><newline><#C8D6E5>/home settings <#48DBFB>设置家园 Flag</#48DBFB><newline><#C8D6E5>/home delete <#48DBFB>删除无人家园</#48DBFB><newline><#C8D6E5>/home reload <#48DBFB>重载配置（管理员）</#48DBFB>"
+home.help: "<#74B9FF><b>家园指令</b><newline><#C8D6E5>/home <#48DBFB>打开空岛菜单</#48DBFB><newline><#C8D6E5>/home create 模板 <#48DBFB>创建家园</#48DBFB><newline><#C8D6E5>/home tp <#48DBFB>传送回家园</#48DBFB><newline><#C8D6E5>/home invite 玩家 <#48DBFB>邀请共同主人</#48DBFB><newline><#C8D6E5>/home accept Token <#48DBFB>接受邀请</#48DBFB><newline><#C8D6E5>/home deny Token <#48DBFB>拒绝邀请</#48DBFB><newline><#C8D6E5>/home leave <#48DBFB>离开家园</#48DBFB><newline><#C8D6E5>/home settings <#48DBFB>设置家园 Flag</#48DBFB><newline><#C8D6E5>/home delete <#48DBFB>删除无人家园</#48DBFB><newline><#C8D6E5>/home reload <#48DBFB>重载配置（管理员）</#48DBFB>"
 template.not-found: "<#FF6B6B>❓ 找不到指定的家园模板。"
 
 # --- 家园操作 ---
@@ -53,3 +53,12 @@ invite.token-required: "<#C8D6E5>🔑 请提供有效的邀请 Token。"
 
 # --- GUI 界面 ---
 gui.unavailable: "<#FF6B6B>❌ GUI 菜单暂时不可用，请联系管理员。"
+
+# 菜单状态与成员操作提示
+gui.upgrade-pending: "<#FBBF24>空岛升级暂未开放，当前可查看升级信息。"
+gui.online: "<#34D399>在线"
+gui.offline: "<#94A3B8>离线"
+gui.state.active: "<#34D399>可用"
+gui.state.creating: "<#FBBF24>正在创建"
+gui.state.recovery: "<#F87171>等待管理员恢复"
+member.removed: "<#34D399>已将 <member> 移出空岛团队。"
