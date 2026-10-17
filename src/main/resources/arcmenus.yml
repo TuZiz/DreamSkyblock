@@ -1,0 +1,6 @@
+schema-version: 1
+# 两个主界面使用 ArcMenu；不可用时保留原箱子入口。
+enabled: true
+# 菜单位于 plugins/ArcMenu/menus，子菜单仍由 DreamSkyblock 原箱子实现。
+main-menu: dreamskyblock-main
+island-menu: dreamskyblock-island

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="paidaxing-framerate" content="30">
+  <meta name="paidaxing-container" content="✦ 我的空岛 ✦">
+  <meta name="paidaxing-viewport" content="0,0,100,100">
+  <meta name="paidaxing-hide-tooltip" content="true">
+  <meta name="paidaxing-cache" content="false">
+  <title>空岛管理</title>
+  <link rel="stylesheet" href="./theme.css">
+</head>
+<body data-page="island">
+  <section class="game-menu management" aria-label="空岛管理菜单">
+    <header class="menu-header"><div class="menu-title"><span class="emblem" aria-hidden="true"><img src="./emblem.svg" alt="" width="28" height="28"></span><div><h1>空岛管理</h1><span><span data-field="player">旅人</span> 的家园中心</span></div></div><div class="header-actions"><button class="text-button" type="button" data-action="help" aria-label="帮助" style="width:32px;height:32px" disabled></button><button class="close" id="close" aria-label="关闭界面" type="button">×</button></div></header>
+    <main class="menu-content">
+      <section class="island-overview" aria-label="当前空岛"><img src="./island.svg" alt="" width="720" height="590"><div class="island-identity"><span class="state-pill"><i></i><span data-field="state">读取中</span></span><h2><span data-field="owner">—</span> 的空岛</h2><p>建造、成长，与好友共同经营</p></div><div class="island-stats"><div><span>等级</span><strong>Lv.<span data-field="level">—</span></strong></div><div><span>建造边界</span><strong><span data-field="border">—</span> <small>× <span data-field="border">—</span></small></strong></div><div><span>共同成员</span><strong><span data-field="member-count">—</span><small> / <span data-field="member-limit">—</span></small></strong></div></div><button class="button primary" type="button" data-action="teleport" disabled>返回空岛</button></section>
+      <div class="management-grid">
+        <section class="panel growth"><div class="panel-heading"><span class="section-icon" aria-hidden="true">✦</span><h2>空岛成长</h2><span class="soft-tag">升级未开放</span></div><div class="level-track"><div class="level-token">Lv.<span data-field="level">—</span></div><div class="growth-copy"><strong>下一等级 · Lv.<span data-field="next-level">—</span></strong><span>积累经验，拓展家园</span></div><b class="progress-percent" data-field="progress">—</b></div><div class="progress" id="progress" role="progressbar" aria-label="空岛升级进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progress-fill"></span></div><div class="progress-values"><span>本级 <b data-field="current-experience">—</b></span><span>需求 <b data-field="required-experience">—</b></span></div><div class="total-experience">累计经验 <strong data-field="experience">—</strong></div><p class="quiet-note" data-field="upgrade-message">正在读取成长信息…</p><button class="panel-button" type="button" data-action="upgrade" disabled>升级说明 <span aria-hidden="true">↗</span></button></section>
+        <section class="panel team"><div class="panel-heading"><span class="section-icon" aria-hidden="true">♧</span><h2>共同成员</h2><span class="count-tag"><span data-field="member-count">—</span> / <span data-field="member-limit">—</span></span></div><div class="member-summary"><span class="summary-number"><span data-field="member-count">—</span><small> / <span data-field="member-limit">—</span></small></span><p>共同成员</p><div class="founder-line">初始主人 <strong data-field="owner">—</strong></div></div><p class="quiet-note team-note">共同主人共享管理权限</p><button class="panel-button" type="button" data-action="members" disabled>管理成员 <span aria-hidden="true">↗</span></button></section>
+        <section class="panel settings-summary"><div class="panel-heading"><span class="section-icon" aria-hidden="true">⚙</span><h2>空岛设置</h2></div><div class="rule-groups"><div>⚙ 世界规则 <span>生物、天气与环境</span></div><div>⌂ 访客权限 <span>建造、容器与互动</span></div><p>打开设置查看当前状态并调整</p></div><button class="panel-button" type="button" data-action="settings" disabled>调整设置 <span aria-hidden="true">↗</span></button></section>
+      </div>
+    </main>
+  </section>
+  <script src="../../JSAPI/pdx-core.js"></script>
+  <script src="../../JSAPI/pdx-container.js"></script>
+  <script src="./slot-map.js"></script>
+  <script src="./container.js"></script>
+</body>
+</html>

@@ -15,7 +15,7 @@ templates:
       x: 0.5
       y: 101
       z: 0.5
-    world-border-size: 100
+    world-border-size: 48
     difficulty: NORMAL
     animals: true
     monsters: true

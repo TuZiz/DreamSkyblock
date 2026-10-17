@@ -17,6 +17,12 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.logging.Level
+import ym.dreamSkyblock.api.HomeValueKey
+import ym.dreamSkyblock.api.HomeValueResult
+import ym.dreamSkyblock.api.HomeValueStatus
+import ym.dreamSkyblock.api.HomeValueRecord
+import ym.dreamSkyblock.value.HomeValueLogic
+import ym.dreamSkyblock.value.HomeValueStartup
 
 class HomeManager(
     private val plugin: DreamSkyblock,
@@ -44,6 +50,7 @@ class HomeManager(
         if (ready) return CompletableFuture.completedFuture(null)
         if (!initializing.compareAndSet(false, true)) return CompletableFuture.failedFuture(IllegalStateException("家园数据正在初始化"))
         return maintenance.recover().thenCompose { migration.run() }.thenCompose { storage.loadIncludingDeleted(ioExecutor) }
+            .thenCompose { HomeValueStartup.reconcile(it, levels, storage, ioExecutor) }
             .thenCompose { list -> tasks.global {
                 homes.clear(); playerHome.clear()
                 list.forEach { home ->
@@ -54,6 +61,7 @@ class HomeManager(
                     }
                 }
                 worlds.adopt(all())
+                all().forEach(worlds::applyFlags)
                 ready = true
                 done()
             } }.thenAccept { }.whenComplete { _, error ->
@@ -83,6 +91,25 @@ class HomeManager(
     }
 
     private fun available(home: Home): Boolean = home.status == "ACTIVE" && !worlds.isBusy(home) && home.id !in mutations
+
+    /** Main-thread transaction boundary used by the serialized value API. */
+    internal fun changeValue(expected: Home, key: HomeValueKey, value: Long, revision: Long): CompletableFuture<HomeValueResult> {
+        val id = expected.id
+        if (!ready || restoring.get()) return CompletableFuture.failedFuture(IllegalStateException("空岛服务未就绪或正在恢复，请重试"))
+        val home = byId(id) ?: return CompletableFuture.failedFuture(IllegalArgumentException("空岛不存在: $id"))
+        if (home !== expected) return CompletableFuture.failedFuture(IllegalStateException("空岛已被恢复，请重新读取当前设施后再提交: $id"))
+        if (!available(home)) return CompletableFuture.failedFuture(IllegalStateException("空岛正在保存或维护，请重试: $id"))
+        if (key.source == HomeValueKey.LEGACY.source) return CompletableFuture.failedFuture(IllegalArgumentException("旧经验记录命名空间为系统保留"))
+        val old = home.valueRecords[key]
+        val classification = HomeValueLogic.status(old, HomeValueRecord(value, revision))
+        if (classification != HomeValueStatus.APPLIED) return CompletableFuture.completedFuture(
+            HomeValueResult(id, classification, home.experience, home.level, home.borderSize, old!!))
+        var status = HomeValueStatus.UNCHANGED
+        return mutate(home) { status = HomeValueLogic.update(it, key, value, revision, levels) }.thenApply {
+            worlds.applyFlags(home)
+            HomeValueResult(id, status, home.experience, home.level, home.borderSize, home.valueRecords.getValue(key))
+        }
+    }
 
     fun create(player: Player, templateId: String) {
         if (!allow(player)) return
@@ -234,6 +261,7 @@ class HomeManager(
                 home.owners.clear(); home.owners.addAll(candidate.owners)
                 home.ownerNames.clear(); home.ownerNames.putAll(candidate.ownerNames)
                 home.flags.clear(); home.flags.putAll(candidate.flags)
+                home.valueRecords.clear(); home.valueRecords.putAll(candidate.valueRecords)
                 home.borderSize = candidate.borderSize; home.level = candidate.level
                 home.experience = candidate.experience; home.borderLevel = candidate.borderLevel
                 home.memberLimit = candidate.memberLimit; home.spawn = candidate.spawn

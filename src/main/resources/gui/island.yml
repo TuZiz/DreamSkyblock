@@ -17,13 +17,13 @@ components:
     symbol: "#"
     material: "CYAN_STAINED_GLASS_PANE"
     name: "<#00F2FE>✦"
-    lore: []
+    lore:
 
   corner:
     symbol: "+"
     material: "YELLOW_STAINED_GLASS_PANE"
     name: "<#FFD700>❖"
-    lore: []
+    lore:
 
   info:
     symbol: "I"
@@ -73,11 +73,12 @@ components:
     name: "<gradient:#F6D365:#FDA085><b>✨ 空岛升级信息</b></gradient>"
     lore:
       - "<#2DD4BF>  ∟ 当前等级：<#FFD700><b><level></b>"
-      - "<#2DD4BF>  ∟ 累计经验：<#00FF87><b><experience></b>"
-      - "<#2DD4BF>  ∟ 下一级经验需求：<#00F2FE><b><required></b>"
+      - "<#2DD4BF>  ∟ 当前空岛价值：<#00FF87><b><experience></b>"
+      - "<#2DD4BF>  ∟ 下一等级价值门槛：<#00F2FE><b><next_threshold></b>"
+      - "<#2DD4BF>  ∟ 距离下一等级还差：<#FFD700><b><remaining_value></b>"
       - "<#2DD4BF>  ∟ 最高建造边界：<#00FF87><b>384 × 384</b>"
       - ""
-      - "<#FBBF24>  * 升级功能暂未开放"
+      - "<#FBBF24>  * 设施价值决定等级，拆除可降级，已解锁边界保留"
     action: "upgrade"
 
   teleport:

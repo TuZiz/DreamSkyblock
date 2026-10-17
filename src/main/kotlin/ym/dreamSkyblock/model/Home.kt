@@ -2,6 +2,8 @@ package ym.dreamSkyblock.model
 
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import ym.dreamSkyblock.api.HomeValueKey
+import ym.dreamSkyblock.api.HomeValueRecord
 
 class Home(
     val id: UUID,
@@ -18,6 +20,7 @@ class Home(
     val owners: MutableSet<UUID> = ConcurrentHashMap.newKeySet()
     val ownerNames: MutableMap<UUID, String> = ConcurrentHashMap()
     val flags: MutableMap<HomeFlag, Boolean> = ConcurrentHashMap()
+    val valueRecords: MutableMap<HomeValueKey, HomeValueRecord> = ConcurrentHashMap()
     @Volatile var loadedWorldName: String? = null
     @Volatile var status: String = "ACTIVE"
 

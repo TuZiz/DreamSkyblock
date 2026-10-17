@@ -23,6 +23,8 @@ class HomeMenuData(private val config: ConfigService, private val homes: HomeMan
             "level" to (home?.level ?: levels.initialLevel).toString(),
             "experience" to (home?.experience ?: 0).toString(),
             "required" to (home?.let { levels.requiredExperienceForNext(it.level) } ?: levels.requiredExperienceForNext(levels.initialLevel)).toString(),
+            "next_threshold" to levels.nextLevelTotalExperience(home?.level ?: 1).toString(),
+            "remaining_value" to (home?.let(levels::remainingValue) ?: levels.nextLevelTotalExperience(1)).toString(),
             "border" to String.format(Locale.ROOT, "%.0f", home?.borderSize ?: levels.borderSizeFor(levels.initialLevel)),
             "members" to (home?.owners?.size ?: 0).toString(),
             "limit" to (home?.memberLimit ?: config.maxMembers).toString(),

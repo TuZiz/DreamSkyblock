@@ -1,6 +1,7 @@
 package ym.dreamSkyblock.storage
 
 import java.sql.Connection
+import java.nio.file.Path
 
 /** Versioned, strictly checked schema. An unknown database is never overwritten. */
 internal object SqliteSchema {
@@ -9,10 +10,11 @@ internal object SqliteSchema {
             "spawn_x", "spawn_y", "spawn_z", "spawn_yaw", "spawn_pitch", "border_size", "level", "experience", "border_level", "member_limit", "status"),
         "home_members" to setOf("home_id", "player_id", "active"),
         "home_owner_names" to setOf("home_id", "player_id", "player_name"),
-        "home_flags" to setOf("home_id", "flag", "enabled")
+        "home_flags" to setOf("home_id", "flag", "enabled"),
+        "home_value_records" to setOf("home_id", "source", "entry_id", "value", "revision")
     )
 
-    fun initialize(connection: Connection) {
+    fun initialize(connection: Connection, path: Path) {
         connection.createStatement().use { statement ->
             statement.executeQuery("PRAGMA journal_mode=WAL").use { result ->
                 check(result.next() && result.getString(1).equals("wal", true)) { "homes.db: 无法启用 WAL" }
@@ -32,8 +34,9 @@ internal object SqliteSchema {
                     check(existing.isEmpty()) { "homes.db: schema-version=0 却包含未知表 $existing；拒绝覆盖" }
                     create(connection)
                 }
-                1 -> Unit
-                else -> error("homes.db: 不支持 schema-version=$version（支持 1）")
+                1 -> { validate(connection, false); SqliteValueMigration.upgrade(connection, path) }
+                2 -> Unit
+                else -> error("homes.db: 不支持 schema-version=$version（支持 1-2）")
             }
         }
         validate(connection)
@@ -87,7 +90,8 @@ internal object SqliteSchema {
                         PRIMARY KEY(home_id, flag)
                     )
                 """.trimIndent())
-                statement.execute("PRAGMA user_version=1")
+                SqliteValueRecords.create(connection)
+                statement.execute("PRAGMA user_version=2")
             }
             connection.commit()
         } catch (error: Throwable) {
@@ -98,19 +102,25 @@ internal object SqliteSchema {
         }
     }
 
-    private fun validate(connection: Connection) {
+    private fun validate(connection: Connection, values: Boolean = true) {
         connection.createStatement().use { statement ->
-            columns.forEach { (table, expected) ->
+            columns.filterKeys { values || it != "home_value_records" }.forEach { (table, expected) ->
                 val actual = statement.executeQuery("PRAGMA table_info($table)").use { result ->
                     buildSet { while (result.next()) add(result.getString("name")) }
                 }
-                check(actual == expected) { "homes.db: schema-version=1 表 $table 字段不匹配，实际=$actual，预期=$expected" }
+                check(actual == expected) { "homes.db: 表 $table 字段不匹配，实际=$actual，预期=$expected" }
             }
             val uniqueIndex = statement.executeQuery("SELECT sql FROM sqlite_master WHERE type='index' AND name='unique_active_home_owner'").use { result ->
                 if (result.next()) result.getString(1) else null
             }
             check(uniqueIndex == "CREATE UNIQUE INDEX unique_active_home_owner ON home_members(player_id) WHERE active=1") {
-                "homes.db: schema-version=1 缺少或修改了成员唯一归属约束"
+                "homes.db: 缺少或修改了成员唯一归属约束"
+            }
+            if (values) {
+                val primary = statement.executeQuery("PRAGMA table_info(home_value_records)").use { rows ->
+                    buildMap { while (rows.next()) if (rows.getInt("pk") > 0) put(rows.getInt("pk"), rows.getString("name")) }
+                }
+                check(primary == mapOf(1 to "home_id", 2 to "source", 3 to "entry_id")) { "homes.db: 设施价值明细缺少唯一设施主键" }
             }
             statement.executeQuery("PRAGMA quick_check").use { result ->
                 while (result.next()) check(result.getString(1) == "ok") { "homes.db: 完整性校验失败: ${result.getString(1)}" }

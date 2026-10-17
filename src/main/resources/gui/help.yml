@@ -17,13 +17,13 @@ components:
     symbol: "#"
     material: "CYAN_STAINED_GLASS_PANE"
     name: "<#00F2FE>✦"
-    lore: []
+    lore:
 
   corner:
     symbol: "+"
     material: "YELLOW_STAINED_GLASS_PANE"
     name: "<#FFD700>❖"
-    lore: []
+    lore:
 
   start:
     symbol: "A"
@@ -87,7 +87,7 @@ components:
       - "<#FFD700>❖ 岛屿星级档案"
       - "<#67E8F9>  ▸ 可在主菜单升级信息中实时追踪发展进度"
       - "<#2DD4BF>  ∟ 当前空岛等级：<#FFD700><b><level> 级</b>"
-      - "<#2DD4BF>  ∟ 累计开拓经验：<#00FF87><b><experience> 点</b>"
+      - "<#2DD4BF>  ∟ 当前空岛价值：<#00FF87><b><experience> 点</b>"
       - ""
       - "<#00F2FE>❖ 领地建造边界"
       - "<#2DD4BF>  ∟ 当前星域范围：<#FFD700><b><border> × <border></b>"
@@ -95,7 +95,8 @@ components:
       - "<#5EEAD4>  ▸ 边界扩张时将完美保留现有宏伟建筑与世界存档"
       - ""
       - "<#FBBF24>❖ 升阶通道状态"
-      - "<#67E8F9>  ▸ 当前展示实时开拓数据，升阶突破功能敬请期待！"
+      - "<#67E8F9>  ▸ 已接入的设施增加价值，拆除扣除价值，等级自动更新"
+      - "<#67E8F9>  ▸ 降级保留已解锁边界；未接入的机器不会自动计分"
 
   back:
     symbol: "R"

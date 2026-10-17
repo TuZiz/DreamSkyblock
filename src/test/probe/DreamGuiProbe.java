@@ -8,6 +8,9 @@ import ym.dreamSkyblock.DreamSkyblock;
 import ym.dreamSkyblock.gui.*;
 import ym.dreamSkyblock.model.*;
 import ym.dreamSkyblock.text.MessageService;
+import ym.dreamSkyblock.reminder.NoHomeReminder;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import kotlin.Unit;
 import java.lang.reflect.Proxy;
 import java.util.*;
@@ -23,6 +26,11 @@ public final class DreamGuiProbe extends JavaPlugin {
     private Home home;
     private int phase, ticks;
     private Inventory original;
+    private ItemStack[] settingsBefore;
+    private int settingsSlot;
+    private NoHomeReminder reminders;
+    private Actor denied;
+    private int reminderStageTick;
     static final UUID OWNER = UUID.fromString("00000000-0000-0000-0000-000000000077");
     static final UUID FRIEND = UUID.fromString("00000000-0000-0000-0000-000000000055");
     @Override public void onEnable() {
@@ -86,11 +94,15 @@ public final class DreamGuiProbe extends JavaPlugin {
             owner.click("menu:settings");phase=9;
         } else if(phase==9) {
             check(owner.menu()==HomeMenu.SETTINGS,"actual settings");
+            original=owner.top;settingsBefore=original.getContents();
+            settingsSlot=((HomeMenuHolder)original.getHolder()).getActions().entrySet().stream().filter(e->e.getValue().equals("toggle:pvp")).findFirst().orElseThrow().getKey();
             owner.click("toggle:pvp");phase=10;
         } else if(phase==10) {
             if(!Boolean.TRUE.equals(home.getFlags().get(HomeFlag.PVP)))return;
             if(!dream.getWorldManager().getLoaded(home).getPVP())return; // Wait for the post-commit main-thread application.
             check(dream.getWorldManager().getLoaded(home).getPVP(),"setting transaction applied to world");
+            check(owner.top==original,"settings commit retains open inventory");
+            for(int slot=0;slot<original.getSize();slot++)check(slot==settingsSlot ? !Objects.equals(settingsBefore[slot],original.getItem(slot)) : Objects.equals(settingsBefore[slot],original.getItem(slot)),"only toggled setting changes slot="+slot);
             dream.getHomeManager().invite(owner.player,friend.player);
             gui.open(friend.player,new MenuRequest(HomeMenu.INVITES,0,null,null));
             String accept=friend.actions().stream().filter(x->x.startsWith("accept:")).findFirst().orElseThrow();
@@ -130,6 +142,68 @@ public final class DreamGuiProbe extends JavaPlugin {
             if(owner.teleports<2)return; // Teleport completion follows asynchronous chunk/world readiness.
             check(owner.teleports>=2,"return uses teleport service");
             getLogger().info("DREAM GUI PROBE ALL PASS conditional main + direct creation/island Lore/no preview menu + create confirm/cancel/stale + drag/shift + single help categorized Lore/legacy migration + shared settings + invite accept + remove/leave + paging/blank empty lists + upgrade placeholder + return service");
+            if(Boolean.getBoolean("dream.gui.partial")) {
+                gui.open(friend.player,new MenuRequest(HomeMenu.INVITES,0,null,null));
+                // Simulate a list shrinking between display and the scheduled click.
+                ((HomeMenuHolder)friend.top.getHolder()).getActions().put(44,"next");
+                original=friend.top;
+                friend.click("next");friend.click("menu:main");phase=30;return;
+            }
+            reminders=new NoHomeReminder(dream,dream.getHomeManager(),new MessageService(dream.getConfigService().getMessages()));
+            owner.close();friend.close();
+            denied=new Actor(UUID.fromString("00000000-0000-0000-0000-000000000099"),"NoPermission");denied.usePermission=false;
+            reminders.start();reminders.start(); // Starting twice must not duplicate the scheduled task.
+            reminders.join(new PlayerJoinEvent(owner.player,Component.empty()));
+            reminders.join(new PlayerJoinEvent(friend.player,Component.empty()));
+            reminders.join(new PlayerJoinEvent(denied.player,Component.empty()));
+            reminderStageTick=ticks;phase=21;
+        } else if(phase==21) {
+            if(ticks-reminderStageTick<8)check(friend.reminderChats==0,"first reminder delayed");
+            if(friend.reminderChats==0)return;
+            check(friend.reminderChats==1 && owner.reminderChats==0 && denied.reminderChats==0,"single chat, owner/permission checks");
+            gui.openMain(friend.player);reminderStageTick=ticks;phase=22;
+        } else if(phase==22) {
+            if(ticks-reminderStageTick<68)return;
+            check(friend.reminderChats==1,"open home menu pauses reminders beyond interval");
+            friend.close();phase=23;
+        } else if(phase==23) {
+            if(friend.reminderChats<2)return;
+            check(friend.reminderChats==2,"one repeated chat after menu closes");
+            getLogger().info("DREAM REMINDER CHAT/GUI PAUSE PASS");
+            dream.getHomeManager().invite(owner.player,friend.player);
+            dream.getHomeManager().accept(friend.player,dream.getHomeManager().inviteTokens(FRIEND).getFirst());phase=24;
+        } else if(phase==24) {
+            if(dream.getHomeManager().byPlayer(FRIEND)==null)return;
+            reminderStageTick=ticks;phase=25;
+        } else if(phase==25) {
+            if(ticks-reminderStageTick<68)return;
+            check(friend.reminderChats==2,"joining island stops reminders");
+            dream.getHomeManager().leave(friend.player);phase=26;
+        } else if(phase==26) {
+            if(dream.getHomeManager().byPlayer(FRIEND)!=null)return;
+            reminders.join(new PlayerJoinEvent(friend.player,Component.empty()));phase=27;
+        } else if(phase==27) {
+            if(friend.reminderChats<3)return;
+            reminders.quit(new PlayerQuitEvent(friend.player,Component.empty(),PlayerQuitEvent.QuitReason.DISCONNECTED));reminderStageTick=ticks;phase=28;
+        } else if(phase==28) {
+            if(ticks-reminderStageTick<68)return;
+            check(friend.reminderChats==3,"quit cancels further reminders");
+            reminders.join(new PlayerJoinEvent(friend.player,Component.empty()));
+            reminders.stop();reminderStageTick=ticks;phase=29;
+        } else if(phase==29) {
+            if(ticks-reminderStageTick<20)return;
+            check(friend.reminderChats==3 && owner.reminderChats==0 && denied.reminderChats==0,"stop clears task and sessions");
+            check(friend.actionBars==0,"no actionbar messages");
+            getLogger().info("DREAM REMINDER ALL PASS delayed/repeated single chat + exact /home text/click + GUI pause/resume + member/permission guard + quit/stop cleanup + no actionbar");
+            getServer().shutdown();phase=99;
+        } else if(phase==30) {
+            check(friend.top==original && friend.menu()==HomeMenu.INVITES,"page refresh keeps inventory and rejects queued old-page navigation");
+            gui.open(owner.player,new MenuRequest(HomeMenu.PLAYERS,0,null,null));
+            ((HomeMenuHolder)owner.top.getHolder()).getActions().put(10,"invite:"+FRIEND);
+            original=owner.top;owner.click("invite:"+FRIEND);phase=31;
+        } else if(phase==31) {
+            check(owner.top==original && owner.menu()==HomeMenu.PLAYERS,"invite click and missing online target retain inventory");
+            getLogger().info("DREAM GUI PARTIAL UPDATE ALL PASS setting single-slot commit + unchanged zero writes + page diff/clear/action remap + stale queued navigation + same inventory");
             getServer().shutdown();phase=99;
         }
     }
@@ -152,6 +226,26 @@ public final class DreamGuiProbe extends JavaPlugin {
         check(((HomeMenuHolder)first.getHolder()).getActions().containsValue("next"),"pagination next");
         check(((HomeMenuHolder)last.getHolder()).getRequest().getPage()==1 && ((HomeMenuHolder)last.getHolder()).getActions().containsValue("previous") && !((HomeMenuHolder)last.getHolder()).getActions().containsValue("next"),"pagination clamps and disables last next");
         check(last.getItem(10)!=null && last.getItem(21)==null,"partial page keeps real entries and unused slots blank");
+        var writes=new ArrayList<Integer>();
+        Inventory tracked=(Inventory)Proxy.newProxyInstance(Inventory.class.getClassLoader(),new Class[]{Inventory.class},(p,m,a)->{
+            if(m.getName().equals("setItem"))writes.add((int)a[0]);
+            try{return m.invoke(first,a);}catch(java.lang.reflect.InvocationTargetException e){throw e.getCause();}
+        });
+        var before=first.getContents();
+        renderer.refresh(tracked,new MenuRequest(HomeMenu.INVITES,99,null,null),yaml,Map.of(),data,Map.of());
+        check(((HomeMenuHolder)first.getHolder()).getRequest().getPage()==1,"in-place page clamps");
+        for(int slot=0;slot<first.getSize();slot++)check(writes.contains(slot)!=Objects.equals(before[slot],first.getItem(slot)),"writes exactly changed page slots "+slot);
+        check(first.getItem(21)==null && !((HomeMenuHolder)first.getHolder()).getActions().containsKey(21),"refresh clears old page items and actions");
+        check(((HomeMenuHolder)first.getHolder()).getActions().get(10).equals("accept:token21"),"page actions match new entries");
+        writes.clear();
+        renderer.refresh(tracked,new MenuRequest(HomeMenu.INVITES,1,null,null),yaml,Map.of(),data,Map.of());
+        check(writes.isEmpty(),"unchanged refresh writes no slots");
+        var sameAppearance=new ArrayList<>(data);
+        sameAppearance.set(21,new MenuEntry(Map.of("inviter","Player21","token","replacement","members","1","limit","4","seconds","300"),null));
+        renderer.refresh(tracked,new MenuRequest(HomeMenu.INVITES,1,null,null),yaml,Map.of(),sameAppearance,Map.of());
+        check(writes.isEmpty() && ((HomeMenuHolder)first.getHolder()).getActions().get(10).equals("accept:replacement"),"identical item still updates hidden action");
+        renderer.refresh(tracked,new MenuRequest(HomeMenu.INVITES,1,null,null),yaml,Map.of(),List.of(),Map.of());
+        check(((HomeMenuHolder)first.getHolder()).getRequest().getPage()==0 && first.getItem(10)==null && !((HomeMenuHolder)first.getHolder()).getActions().containsKey(10),"shrinking list clamps and clears old entries");
         for(var menu:new HomeMenu[]{HomeMenu.INVITES,HomeMenu.PLAYERS,HomeMenu.MEMBERS}) {
             var config=dream.getConfigService().getMenus().get(menu);
             var empty=renderer.render(friend.player,null,new MenuRequest(menu,0,null,null),config,Map.of(),List.of(),Map.of());
@@ -171,13 +265,21 @@ public final class DreamGuiProbe extends JavaPlugin {
         getLogger().info("DREAM GUI EMPTY LIST PASS blank slots/no placeholder/no action + retained navigation + real entries/partial page");
     }
     private final class Actor {
-        Player player; Inventory top,bottom; InventoryView view; int teleports;
+        Player player; Inventory top,bottom; InventoryView view; int teleports,reminderChats,actionBars;boolean usePermission=true;
         Actor(UUID id,String name) {
             bottom=Bukkit.createInventory(null,27);
             var scheduler=(EntityScheduler)Proxy.newProxyInstance(EntityScheduler.class.getClassLoader(),new Class[]{EntityScheduler.class},(p,m,a)->defaults(m.getReturnType()));
             player=(Player)Proxy.newProxyInstance(Player.class.getClassLoader(),new Class[]{Player.class},(p,m,a)->switch(m.getName()) {
                 case "getUniqueId"->id;case "getName"->name;case "getServer"->getServer();case "isOnline","isValid"->true;
-                case "hasPermission"->"dreamskyblock.use".equals(a[0]);case "getScheduler"->scheduler;
+                case "hasPermission"->usePermission && "dreamskyblock.use".equals(a[0]);case "getScheduler"->scheduler;
+                case "sendMessage"->{
+                    for(var value:a)if(value instanceof Component component && plainText(component).contains("你还没有空岛")) {
+                        check(plainText(component).equals("你还没有空岛，输入 /home 即可创建！"),"exact reminder text");
+                        check(hasHomeClick(component),"clickable /home command");verifyItalic(component,TextDecoration.State.NOT_SET);reminderChats++;
+                    }
+                    yield null;
+                }
+                case "sendActionBar"->{actionBars++;yield null;}
                 case "getWorld"->getServer().getWorlds().getFirst();
                 case "getOpenInventory"->view;
                 case "openInventory"->{top=(Inventory)a[0];yield view;}
@@ -208,6 +310,8 @@ public final class DreamGuiProbe extends JavaPlugin {
         for(var item:inventory.getContents())if(item!=null){var meta=item.getItemMeta();if(meta.itemName()!=null)verifyItalic(meta.itemName(),TextDecoration.State.NOT_SET);if(meta.lore()!=null)for(var lore:meta.lore())verifyItalic(lore,TextDecoration.State.NOT_SET);}
     }
     private void verifyItalic(Component node,TextDecoration.State inherited){var value=node.decoration(TextDecoration.ITALIC);var effective=value==TextDecoration.State.NOT_SET?inherited:value;check(effective==TextDecoration.State.FALSE,"item italic false");for(var child:node.children())verifyItalic(child,effective);}
+    private static String plainText(Component component){var text=new StringBuilder(component instanceof net.kyori.adventure.text.TextComponent t?t.content():"");for(var child:component.children())text.append(plainText(child));return text.toString();}
+    private static boolean hasHomeClick(Component component){return net.kyori.adventure.text.event.ClickEvent.runCommand("/home").equals(component.clickEvent()) || component.children().stream().anyMatch(DreamGuiProbe::hasHomeClick);}
     private static void check(boolean ok,String message){if(!ok)throw new AssertionError(message);}
     private static Object defaults(Class<?> t){if(!t.isPrimitive())return null;if(t==boolean.class)return false;if(t==int.class)return 0;if(t==long.class)return 0L;if(t==double.class)return 0d;if(t==float.class)return 0f;if(t==byte.class)return (byte)0;if(t==short.class)return (short)0;return null;}
 }

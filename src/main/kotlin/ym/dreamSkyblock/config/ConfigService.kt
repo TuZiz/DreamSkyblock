@@ -18,7 +18,8 @@ class ConfigService(private val plugin: DreamSkyblock) {
         val dataFolderName: String,
         val messages: YamlConfiguration,
         val menus: Map<HomeMenu, YamlConfiguration>,
-        val levels: YamlConfiguration
+        val levels: YamlConfiguration,
+        val arcMenus: YamlConfiguration
     )
 
     lateinit var templates: Map<String, HomeTemplate>
@@ -39,10 +40,12 @@ class ConfigService(private val plugin: DreamSkyblock) {
     val creationTemplates: Map<String, HomeTemplate> get() = templates.filterValues { it.generator == HomeTemplate.GeneratorType.SKYBLOCK }
     lateinit var levels: YamlConfiguration
         private set
+    lateinit var arcMenus: YamlConfiguration
+        private set
 
     fun load() {
         plugin.saveDefaultConfig()
-        listOf("templates.yml", "retired_templates.yml", "lang/zh_cn.yml", "levels.yml").forEach {
+        listOf("templates.yml", "retired_templates.yml", "lang/zh_cn.yml", "levels.yml", "arcmenus.yml").forEach {
             if (!File(plugin.dataFolder, it).exists()) plugin.saveResource(it, false)
         }
         apply(readSnapshot())
@@ -89,7 +92,24 @@ class ConfigService(private val plugin: DreamSkyblock) {
             dataFolderName,
             loadLanguage(),
             HomeGuiConfig(plugin).load(),
-            VersionedYaml.load(File(plugin.dataFolder, "levels.yml").toPath())
+            VersionedYaml.load(File(plugin.dataFolder, "levels.yml").toPath()).also { yaml ->
+                HomeBorderSizes.read(yaml)
+                HomeValueThresholds.read(yaml)
+                if (!yaml.contains("progression.thresholds")) {
+                    plugin.logger.warning("levels.yml: 缺少 progression.thresholds，使用累计价值门槛 0/100/300/600/1000/1500/2100/2800/3600；旧经验翻倍公式已停用")
+                }
+                if (!yaml.contains("border.sizes")) {
+                    plugin.logger.warning("levels.yml: 缺少 border.sizes，使用默认九档边界 48/64/96/128/160/192/256/320/384；旧 border.base-size/per-level 已停用，请在 border.sizes 中配置")
+                }
+            },
+            VersionedYaml.load(File(plugin.dataFolder, "arcmenus.yml").toPath()).also { yaml ->
+                require(yaml.isBoolean("enabled")) { "arcmenus.yml: enabled 必须为布尔值" }
+                for (key in listOf("main-menu", "island-menu")) {
+                    require(yaml.getString(key)?.matches(Regex("[a-z0-9][a-z0-9_-]*")) == true) {
+                        "arcmenus.yml: $key 无效: ${yaml.get(key)}"
+                    }
+                }
+            }
         )
     }
 
@@ -116,6 +136,7 @@ class ConfigService(private val plugin: DreamSkyblock) {
         messages = snapshot.messages
         menus = snapshot.menus
         levels = snapshot.levels
+        arcMenus = snapshot.arcMenus
     }
 
     private fun parseTemplate(id: String, root: YamlConfiguration): HomeTemplate? {
@@ -130,7 +151,7 @@ class ConfigService(private val plugin: DreamSkyblock) {
         val values = HomeFlag.entries.associateWith { root.getBoolean("$path.flags.${it.name.lowercase()}", it.defaultValue) }
         return HomeTemplate(
             id, root.getString("$path.display-name", id)!!, root.getStringList("$path.description"), icon, env, generator,
-            center, spawn, root.getDouble("$path.world-border-size", 100.0).coerceIn(16.0, 384.0),
+            center, spawn, root.getDouble("$path.world-border-size", 48.0).coerceIn(16.0, 384.0),
             runCatching { org.bukkit.Difficulty.valueOf(root.getString("$path.difficulty", "NORMAL")!!.uppercase()) }.getOrDefault(org.bukkit.Difficulty.NORMAL),
             root.getBoolean("$path.animals", true), root.getBoolean("$path.monsters", true), root.getBoolean("$path.pvp", false),
             root.getBoolean("$path.keep-inventory", true), root.getBoolean("$path.flight", false), root.getBoolean("$path.weather", false),

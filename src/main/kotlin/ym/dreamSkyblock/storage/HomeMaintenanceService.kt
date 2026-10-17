@@ -17,7 +17,8 @@ class HomeMaintenanceService(
     private val files: NativeWorldFiles,
     private val worlds: HomeWorldManager,
     private val pluginRoot: Path,
-    private val io: Executor
+    private val io: Executor,
+    private val normalize: (HomeSnapshot) -> HomeSnapshot = { it }
 ) {
     fun backup(home: Home): CompletableFuture<String> = worlds.maintain(home) {
         val metadata = storage.snapshot(home).toYaml()
@@ -25,7 +26,7 @@ class HomeMaintenanceService(
     }
 
     fun restore(home: Home, backupId: String): CompletableFuture<Home> = worlds.maintain(home) {
-        CompletableFuture.supplyAsync({ HomeSnapshot.fromYaml(files.readBackup(home.id, backupId)).withStatus("ACTIVE") }, io)
+        CompletableFuture.supplyAsync({ normalize(HomeSnapshot.fromYaml(files.readBackup(home.id, backupId)).withStatus("ACTIVE")) }, io)
             .thenCompose { snapshot ->
                 // 换盘前预检唯一成员；SQLite提交仍有唯一约束作为最终防线。
                 storage.loadAll(io).thenApply { current ->
@@ -58,7 +59,7 @@ class HomeMaintenanceService(
         var chain = CompletableFuture.completedFuture<Void>(null)
         pending.forEach { (id, metadata) ->
             chain = chain.thenCompose {
-                val snapshot = HomeSnapshot.fromYaml(metadata).withStatus("ACTIVE")
+                val snapshot = normalize(HomeSnapshot.fromYaml(metadata).withStatus("ACTIVE"))
                 check(snapshot.id == id) { "恢复journal归属错误: $id" }
                 storage.restoreSnapshot(snapshot, io).thenAcceptAsync({ files.acknowledgeRestore(id) }, io)
             }

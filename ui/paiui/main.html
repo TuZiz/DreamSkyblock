@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="paidaxing-framerate" content="30">
+  <meta name="paidaxing-container" content="✦ 空岛 · 星海启航 ✦">
+  <meta name="paidaxing-viewport" content="0,0,100,100">
+  <meta name="paidaxing-hide-tooltip" content="true">
+  <meta name="paidaxing-cache" content="false">
+  <title>空岛家园 · 浮空世界</title>
+  <link rel="stylesheet" href="./theme.css">
+  <link rel="stylesheet" href="./welcome.css">
+</head>
+<body data-page="main">
+  <section class="game-menu welcome" aria-label="空岛家园主菜单">
+    <header class="realm-header">
+      <div class="realm-brand">
+        <span class="realm-mark"><img src="./icons/realm.svg" width="34" height="34" alt=""></span>
+        <div><h1>空岛家园</h1></div>
+      </div>
+      <div class="realm-header-end"><button id="close" class="realm-close" type="button" aria-label="关闭界面"><img src="./icons/close.svg" width="20" height="20" alt=""></button></div>
+    </header>
+    <main class="realm-content">
+      <section class="realm-left" aria-label="开始你的空岛生活">
+        <div class="realm-intro">
+
+          <p class="realm-greeting">欢迎，<b data-field="player">旅人</b></p>
+          <h2>从这里，<br>开始建造<span>。</span></h2>
+          <p class="realm-description">创建属于自己的空岛，慢慢建成理想的家园。<br>也可以与好友相聚，一同探索天空的边界。</p>
+          <div class="realm-tags"><span>自由建造</span><i></i><span>共同经营</span><i></i><span>结伴冒险</span></div>
+        </div>
+        <div class="realm-actions">
+
+          <button class="entry-card entry-primary" type="button" data-action="create" aria-describedby="menu-lore" disabled>
+            <span class="entry-icon"><img src="./icons/create.svg" width="30" height="30" alt=""></span>
+            <span class="entry-copy"><strong>创建我的空岛</strong><span>从一座小岛开始，让每个想法落地</span></span>
+            <img class="entry-arrow" src="./icons/arrow.svg" width="22" height="22" alt="">
+          </button>
+          <button class="entry-card" type="button" data-action="join" aria-describedby="menu-lore" disabled>
+            <span class="entry-icon"><img src="./icons/friends.svg" width="30" height="30" alt=""></span>
+            <span class="entry-copy"><strong>加入好友 <span class="entry-badge" data-field="invites">—</span></strong><span>查看收到的空岛邀请，与伙伴共同经营</span></span>
+            <img class="entry-arrow" src="./icons/arrow.svg" width="22" height="22" alt="">
+          </button>
+          <button class="entry-card" type="button" data-action="help" aria-describedby="menu-lore" disabled>
+            <span class="entry-icon"><img src="./icons/guide.svg" width="30" height="30" alt=""></span>
+            <span class="entry-copy"><strong>玩法介绍与帮助</strong><span>了解空岛创建、好友邀请与基础操作</span></span>
+            <img class="entry-arrow" src="./icons/arrow.svg" width="22" height="22" alt="">
+          </button>
+        </div>
+      </section>
+      <section class="realm-right" aria-label="初始空岛">
+
+        <div class="realm-art">
+          <span class="realm-orbit orbit-outer"></span><span class="realm-orbit orbit-inner"></span>
+          <span class="realm-orbit-dot orbit-dot-one"></span><span class="realm-orbit-dot orbit-dot-two"></span>
+          <img class="realm-island" src="./island.svg" width="720" height="590" alt="草地、树木与小屋组成的浮空岛">
+        </div>
+        <div class="realm-template">
+          <span class="template-symbol"><img src="./icons/platform.svg" width="28" height="28" alt=""></span>
+          <div class="template-copy"><strong data-field="template-name">初始空岛</strong><p data-field="template-description">一片草地，等待你的第一个想法</p></div>
+          <div class="template-dimension"><b><span data-field="platform">—</span> × <span data-field="platform">—</span></b><span>初始平台</span></div>
+        </div>
+
+      </section>
+    </main>
+  </section>
+  <aside id="menu-lore" class="menu-lore" role="tooltip" style="display:none"><strong id="lore-heading"></strong><div id="lore-content"></div></aside>
+  <script src="../../JSAPI/pdx-core.js"></script>
+  <script src="../../JSAPI/pdx-container.js"></script>
+  <script src="./slot-map.js"></script>
+  <script src="./lore.js"></script>
+  <script src="./container.js"></script>
+</body>
+</html>

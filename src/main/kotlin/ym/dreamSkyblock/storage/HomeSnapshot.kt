@@ -7,6 +7,9 @@ import ym.dreamSkyblock.model.HomeTemplate
 import java.util.Collections
 import java.util.Locale
 import java.util.UUID
+import ym.dreamSkyblock.api.HomeValueKey
+import ym.dreamSkyblock.api.HomeValueRecord
+import ym.dreamSkyblock.value.HomeValueLogic
 
 /** Immutable metadata captured before asynchronous persistence or world backup. */
 class HomeSnapshot(
@@ -23,11 +26,13 @@ class HomeSnapshot(
     ownerNames: Map<UUID, String>,
     flags: Map<HomeFlag, Boolean>,
     val spawn: HomeTemplate.Point? = null,
-    val status: String = "ACTIVE"
+    val status: String = "ACTIVE",
+    valueRecords: Map<HomeValueKey, HomeValueRecord>? = null
 ) {
     val owners: Set<UUID> = Collections.unmodifiableSet(LinkedHashSet(owners))
     val ownerNames: Map<UUID, String> = Collections.unmodifiableMap(LinkedHashMap(ownerNames))
     val flags: Map<HomeFlag, Boolean> = Collections.unmodifiableMap(LinkedHashMap(flags))
+    val valueRecords: Map<HomeValueKey, HomeValueRecord> = Collections.unmodifiableMap(LinkedHashMap(HomeValueLogic.normalized(valueRecords, experience)))
     val worldKey: String get() = "dreamskyblock:dreamskyblock_${id.toString().replace("-", "")}"
 
     init {
@@ -49,14 +54,15 @@ class HomeSnapshot(
         home.owners.addAll(owners)
         home.ownerNames.putAll(ownerNames)
         home.flags.putAll(flags)
+        home.valueRecords.putAll(valueRecords)
         home.status = status
     }
 
     fun withStatus(newStatus: String): HomeSnapshot = HomeSnapshot(id, ownerName, templateId, center.copy(),
-        borderSize, level, experience, borderLevel, memberLimit, owners, ownerNames, flags, spawn?.copy(), newStatus)
+        borderSize, level, experience, borderLevel, memberLimit, owners, ownerNames, flags, spawn?.copy(), newStatus, valueRecords)
 
     fun toYaml(): String = YamlConfiguration().apply {
-        set("schema-version", 1)
+        set("schema-version", 2)
         set("id", id.toString())
         set("world-key", worldKey)
         set("owner-name", ownerName)
@@ -72,6 +78,7 @@ class HomeSnapshot(
         set("owners", owners.sortedBy(UUID::toString).map(UUID::toString))
         ownerNames.toSortedMap(compareBy(UUID::toString)).forEach { (ownerId, name) -> set("owner-names.$ownerId", name) }
         flags.toSortedMap(compareBy(HomeFlag::name)).forEach { (flag, value) -> set("flags.${flag.name.lowercase(Locale.ROOT)}", value) }
+        HomeValueSnapshotCodec.write(this, valueRecords)
     }.saveToString()
 
     companion object {
@@ -80,13 +87,13 @@ class HomeSnapshot(
         fun fromHome(home: Home): HomeSnapshot = synchronized(home) {
             HomeSnapshot(home.id, home.ownerName, home.templateId, home.center.copy(), home.borderSize,
                 home.level, home.experience, home.borderLevel, home.memberLimit, home.owners.toSet(),
-                home.ownerNames.toMap(), home.flags.toMap(), home.spawn?.copy(), home.status)
+                home.ownerNames.toMap(), home.flags.toMap(), home.spawn?.copy(), home.status, home.valueRecords.toMap().takeIf { it.isNotEmpty() })
         }
 
         /** Legacy home.yml is accepted; malformed fields never silently disappear. */
         fun fromYaml(text: String): HomeSnapshot {
             val yaml = YamlConfiguration().also { it.loadFromString(text) }
-            if (yaml.contains("schema-version")) require(integer(yaml, "schema-version", null) == 1) {
+            if (yaml.contains("schema-version")) require(integer(yaml, "schema-version", null) in 1..2) {
                 "home.yml: 不支持 schema-version=${yaml.get("schema-version")}"
             }
             val id = uuid(requiredString(yaml, "id"), "id")
@@ -113,7 +120,7 @@ class HomeSnapshot(
                 readPoint(yaml, "center"), number(yaml, "border-size", null), integer(yaml, "level", 1),
                 longNumber(yaml, "experience", 0), integer(yaml, "border-level", 1), integer(yaml, "member-limit", 4),
                 owners.toSet(), names, flags, if (yaml.contains("spawn")) readPoint(yaml, "spawn") else null,
-                if (yaml.contains("status")) requiredString(yaml, "status") else "ACTIVE")
+                if (yaml.contains("status")) requiredString(yaml, "status") else "ACTIVE", HomeValueSnapshotCodec.read(yaml))
             if (yaml.contains("world-key")) require(requiredString(yaml, "world-key") == snapshot.worldKey) {
                 "home $id: world-key 与 home_id 不匹配"
             }

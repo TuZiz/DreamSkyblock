@@ -1,0 +1,54 @@
+/* 1440 × 900 game canvas, fitted as a whole by container.js. */
+body[data-page="main"] { width:100vw; height:100vh; overflow:hidden; padding:0; background:rgba(5,16,15,.58); }
+.welcome.game-menu { width:1440px; height:900px; max-width:none; max-height:none; flex-shrink:0; display:flex; flex-direction:column; overflow:hidden; border-radius:22px; border:1px solid #88a78d44; background:linear-gradient(115deg,#132924f7,#1a342cf5 60%,#203b32f7); box-shadow:0 30px 90px #0007,inset 0 1px #d9e6c51a; transform-origin:center center; }
+.welcome.game-menu:before { top:0; left:12%; right:38%; height:1px; background:linear-gradient(90deg,transparent,#ddc68a99,transparent); }
+.realm-header { height:112px; flex-shrink:0; display:flex; align-items:center; justify-content:space-between; padding:0 54px; border-bottom:1px solid #b1c6b318; }
+.realm-brand { display:flex; align-items:center; gap:18px; }
+.realm-mark { width:58px; height:58px; display:flex; align-items:center; justify-content:center; flex-shrink:0; border-radius:17px; border:1px solid #dfc28a55; background:#dfc28a0a; }
+.realm-mark img { display:block; }
+.realm-brand h1 { font-size:28px; line-height:1.35; font-weight:600; letter-spacing:2px; color:#f1f1df; }
+.realm-header-end { display:flex; align-items:center; gap:26px; }
+.realm-close { width:40px; height:40px; padding:0; display:flex; align-items:center; justify-content:center; border:1px solid #b9cbb52b; background:#eff4db05; border-radius:11px; }
+.realm-close img { display:block; pointer-events:none; }
+.realm-close:hover { background:#e1cd9112; border-color:#dfc28a66; }
+.realm-content { display:flex; flex:1; min-height:0; padding:34px 54px 30px; gap:44px; }
+.realm-left { width:588px; flex-shrink:0; display:flex; flex-direction:column; justify-content:space-between; }
+.realm-intro { padding:2px 0 0; }
+.realm-greeting { font-size:15px; color:#a6c1ae; margin-top:0; }
+.realm-greeting b { font-weight:500; color:#d5e7c9; }
+.realm-intro h2 { font-size:58px; line-height:1.15; font-weight:600; letter-spacing:1px; color:#f3f2df; margin:17px 0 14px; }
+.realm-intro h2>span { color:#dac38a; }
+.realm-description { color:#adc1b3; font-size:15px; line-height:1.9; }
+.realm-tags { display:flex; align-items:center; gap:14px; font-size:11px; color:#b7c8b8; margin-top:17px; }
+.realm-tags>span { padding:5px 11px; border:1px solid #bdd3ba24; border-radius:20px; background:#bdd3ba05; }
+.realm-tags i { width:3px; height:3px; border-radius:50%; background:#cbb78166; }
+.realm-actions { display:flex; flex-direction:column; gap:10px; padding-top:20px; }
+.entry-card { width:100%; height:80px; min-height:80px; display:flex; align-items:center; gap:17px; text-align:left; padding:0 20px; border:1px solid #adc5ad2b; border-radius:14px; background:#1b362d99; color:#ecf0df; position:relative; }
+.entry-card.entry-primary { height:94px; min-height:94px; border-color:#afc79277; background:linear-gradient(110deg,#44684ce0,#31553feb); box-shadow:inset 0 1px #d5e3b71a,0 8px 22px #0b1b142b; }
+.entry-icon { display:flex; align-items:center; justify-content:center; width:46px; height:46px; flex-shrink:0; border:1px solid #d9dfb52b; border-radius:12px; background:#cedbb20a; pointer-events:none; }
+.entry-icon img { display:block; width:30px; height:30px; }
+.entry-primary .entry-icon { background:#e2d49b0b; border-color:#d5dba940; }
+.entry-copy { display:flex; flex-direction:column; gap:5px; flex:1; min-width:0; pointer-events:none; }
+.entry-copy>strong { display:flex; align-items:center; gap:10px; font-size:18px; font-weight:500; color:#eef1de; }
+.entry-copy>span { color:#a9c0ad; font-size:12px; }
+.entry-primary .entry-copy>span { color:#c4d6bb; }
+.entry-badge { font-size:10px; line-height:1.4; min-width:22px; text-align:center; padding:1px 5px; border:1px solid #cfbb7c3b; color:#dfc98e; border-radius:5px; background:#c8af6c0a; }
+.entry-arrow { opacity:.65; pointer-events:none; }
+.entry-card:hover:not(:disabled) { background:#2d4c3ee0; border-color:#c6d6aa77; }
+.entry-primary:hover:not(:disabled) { background:linear-gradient(110deg,#50785ae8,#3d654aeb); border-color:#cbd6a5b3; }
+.entry-card:active:not(:disabled) { transform:translateY(1px); }
+.entry-card:focus-visible,.realm-close:focus-visible { outline:2px solid #dfc28a; outline-offset:3px; }
+.realm-right { flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; border-left:1px solid #b5caae0b; padding-left:8px; }
+.realm-art { width:100%; height:484px; position:relative; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.realm-island { width:640px; height:524px; max-width:none; position:relative; z-index:1; filter:drop-shadow(0 25px 28px #081a1266); }
+.realm-orbit { position:absolute; display:block; border-radius:50%; pointer-events:none; }
+.orbit-outer { width:512px; height:442px; border:1px solid #bdd7b018; transform:rotate(-20deg); background:radial-gradient(ellipse,#a7c49a16,transparent 70%); }
+.orbit-inner { width:438px; height:382px; border:1px solid #c8dbb410; transform:rotate(20deg); }
+.realm-orbit-dot { width:5px; height:5px; position:absolute; border-radius:50%; background:#dec68a99; }
+.orbit-dot-one { left:51px; top:183px; }.orbit-dot-two { right:65px; bottom:84px; width:3px; height:3px; }
+.realm-template { width:490px; min-height:76px; padding:15px 17px; display:flex; align-items:center; gap:13px; border:1px solid #b6cead29; border-radius:13px; background:linear-gradient(100deg,#28453670,#1d382e70); }
+.template-symbol { width:42px; height:42px; display:flex; align-items:center; justify-content:center; background:#c5cf9a0a; border-radius:10px; flex-shrink:0; }
+.template-symbol img { display:block; }
+.template-copy { flex:1; min-width:0; }.template-copy strong { font-size:14px; font-weight:500; color:#e5ebd6; }.template-copy p { color:#93ad9b; font-size:11px; line-height:1.7; margin-top:3px; }
+.template-dimension { display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex-shrink:0; border-left:1px solid #bdd2ac20; padding-left:17px; }
+.template-dimension b { font-size:16px; font-weight:500; letter-spacing:1px; color:#d5c58e; }.template-dimension>span { color:#89a591; font-size:10px; }

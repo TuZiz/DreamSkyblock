@@ -7,6 +7,7 @@ load: POSTWORLD
 folia-supported: false
 softdepend:
   - PlaceholderAPI
+  - ArcMenu
 
 commands:
   home:
@@ -20,6 +21,8 @@ permissions:
   dreamskyblock.use:
     description: 使用家园全部普通功能
     default: true
+    children:
+      arcmenu.use: true
   dreamskyblock.admin:
     description: 管理 DreamSkyblock 并绕过家园陌生人保护
     default: op

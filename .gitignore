@@ -114,3 +114,8 @@ run/
 
 # Local extracted server API reference
 /org/bukkit/WorldCreator.java
+
+# Local verification and browser artifacts
+/.playwright-cli/
+/output/
+/x.payload.op

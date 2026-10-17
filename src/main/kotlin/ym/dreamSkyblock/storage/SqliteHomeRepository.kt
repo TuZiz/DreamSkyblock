@@ -108,7 +108,7 @@ class SqliteHomeRepository(val databasePath: Path) : AutoCloseable {
                         val snapshot = HomeSnapshot(id, result.getString("owner_name"), result.getString("template_id"), point(result, "center"),
                             result.getDouble("border_size"), result.getInt("level"), result.getLong("experience"), result.getInt("border_level"),
                             result.getInt("member_limit"), owners, names, flags,
-                            if (result.getObject("spawn_x") == null) null else point(result, "spawn"), result.getString("status"))
+                            if (result.getObject("spawn_x") == null) null else point(result, "spawn"), result.getString("status"), SqliteValueRecords.read(database, id))
                         check(result.getString("world_key") == snapshot.worldKey) { "home $id: world_key 与 home_id 不匹配" }
                         add(snapshot)
                     }
@@ -171,6 +171,7 @@ class SqliteHomeRepository(val databasePath: Path) : AutoCloseable {
             }
             statement.executeBatch()
         }
+        SqliteValueRecords.write(database, snapshot)
     }
 
     private fun status(database: Connection, id: UUID): String? =
@@ -201,7 +202,7 @@ class SqliteHomeRepository(val databasePath: Path) : AutoCloseable {
             Class.forName("org.sqlite.JDBC")
             DriverManager.getConnection("jdbc:sqlite:${databasePath.toAbsolutePath()}").also { database ->
                 try {
-                    SqliteSchema.initialize(database)
+                    SqliteSchema.initialize(database, databasePath)
                     connection = database
                 } catch (error: Throwable) {
                     runCatching { database.close() }.exceptionOrNull()?.let(error::addSuppressed)
