@@ -84,7 +84,7 @@ class ArcHomeMenus(
         if (args.size != 2 || args[0] != session.token || !valid(player, session) || bridge.surface(player) == null) return false
         val component = args[1]
         val allowed = if (session.menu == HomeMenu.MAIN) setOf("create", "join", "help", "close")
-            else setOf("members", "settings", "help", "upgrade", "teleport", "close")
+            else setOf("members", "settings", "help", "upgrade", "teleport", "spawn", "warehouse", "close")
         if (component !in allowed) return false
         if (component != "upgrade") close(player)
         pending[player.uniqueId] = session

@@ -11,6 +11,8 @@ import ym.dreamSkyblock.service.HomeManager
 import ym.dreamSkyblock.text.MessageService
 import java.util.UUID
 import ym.dreamSkyblock.gui.arc.ArcHomeMenus
+import ym.dreamSkyblock.gui.invero.InveroHomeMenus
+import ym.dreamSkyblock.world.WorldSpawnTeleport
 
 /** Main-thread menu navigation; mutations are delegated to existing transaction services. */
 class HomeGuiManager(private val plugin: DreamSkyblock, private val config: ConfigService,
@@ -18,15 +20,19 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
     private val renderer = HomeMenuRenderer(messages)
     private val data = HomeMenuData(config, homes, plugin.levelService, messages)
     private var arc: ArcHomeMenus? = null
+    private val invero = InveroHomeMenus(plugin, config)
+    private val spawnTeleport = WorldSpawnTeleport(plugin, messages)
 
     /** Paper main thread; optional ArcMenu is resolved only after its plugin is enabled. */
     fun start() {
-        if (plugin.server.pluginManager.isPluginEnabled("ArcMenu")) {
+        if (config.inveroMenus.enabled) {
+            plugin.logger.info("空岛主菜单选择 Invero；业务和子菜单继续使用 DreamSkyblock")
+        } else if (plugin.server.pluginManager.isPluginEnabled("ArcMenu")) {
             arc = ArcHomeMenus(plugin, config, homes, ::openMain, ::performArcAction).also { it.start() }
         } else plugin.logger.info("ArcMenu 未启用，空岛入口保留原箱子菜单")
     }
 
-    fun viewing(player: Player): Boolean = player.openInventory.topInventory.holder is HomeMenuHolder || arc?.viewing(player) == true
+    fun viewing(player: Player): Boolean = player.openInventory.topInventory.holder is HomeMenuHolder || arc?.viewing(player) == true || invero.viewing(player)
 
     fun stop() { closeAll(); arc?.stop(); arc = null }
 
@@ -56,7 +62,11 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
         if (request.menu == HomeMenu.CONFIRM && (home != null || request.template !in config.creationTemplates)) { openMain(player); return }
         if (request.menu == HomeMenu.MEMBER_CONFIRM && request.member !in home!!.owners) { open(player, MenuRequest(HomeMenu.MEMBERS)); return }
         if (request.menu == HomeMenu.MAIN && home != null) { openMain(player); return }
-        if (request.menu in setOf(HomeMenu.MAIN, HomeMenu.ISLAND) && arc?.open(player, request.menu) == true) return
+        if (request.menu in setOf(HomeMenu.MAIN, HomeMenu.ISLAND)) {
+            if (config.inveroMenus.enabled) {
+                if (invero.open(player, request.menu, data.values(player, home, request))) return
+            } else if (arc?.open(player, request.menu) == true) return
+        }
         arc?.close(player)
         val yaml = config.menus.getValue(request.menu)
         val existing = player.openInventory.topInventory
@@ -117,6 +127,25 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
                 player.closeInventory(); homes.create(player, template)
             }
             action == "teleport" -> { player.closeInventory(); homes.teleport(player) }
+            action == "spawn" -> spawnTeleport.teleport(player)
+            action == "warehouse" -> {
+                if (request.menu != HomeMenu.ISLAND || homes.byPlayer(player.uniqueId) == null) return
+                if (!plugin.server.pluginManager.isPluginEnabled("Genlite")) {
+                    messages.send(player, "gui.warehouse-unavailable")
+                    return
+                }
+                player.closeInventory()
+                if (!player.performCommand("genlite:genlite warehouse")) messages.send(player, "gui.warehouse-unavailable")
+            }
+            action == "holograms" -> {
+                if (request.menu != HomeMenu.ISLAND || homes.byPlayer(player.uniqueId) == null) return
+                if (!plugin.server.pluginManager.isPluginEnabled("Genlite")) {
+                    messages.send(player, "gui.unavailable")
+                    return
+                }
+                player.closeInventory()
+                if (!player.performCommand("genlite:genlite holograms menu")) messages.send(player, "gui.unavailable")
+            }
             action == "upgrade" -> messages.send(player, "gui.upgrade-pending")
             action.startsWith("accept:") -> { player.closeInventory(); homes.accept(player, action.substringAfter(':')) }
             action.startsWith("invite:") -> {
@@ -141,12 +170,19 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
 
     private fun uuid(value: String): UUID? = runCatching { UUID.fromString(value) }.getOrNull()
 
+    /** Player command bridge: same component whitelist, permissions and live home checks as the original menu. */
+    fun performMenuAction(player: Player, component: String) {
+        if (!allowed(player)) return
+        val home = homes.byPlayer(player.uniqueId)
+        performArcAction(player, if (home == null) HomeMenu.MAIN else HomeMenu.ISLAND, home?.id, component)
+    }
+
     /** Arc routes accept component IDs only; the original YAML remains the action authority. */
     private fun performArcAction(player: Player, menu: HomeMenu, homeId: UUID?, component: String) {
         if (!allowed(player) || homes.byPlayer(player.uniqueId)?.id != homeId) return
         val allowedComponents = when (menu) {
             HomeMenu.MAIN -> setOf("create", "join", "help", "close")
-            HomeMenu.ISLAND -> setOf("members", "settings", "help", "upgrade", "teleport", "close")
+            HomeMenu.ISLAND -> setOf("members", "settings", "help", "upgrade", "teleport", "spawn", "warehouse", "close")
             else -> return
         }
         if (component !in allowedComponents || (menu == HomeMenu.MAIN) != (homeId == null)) return
@@ -161,6 +197,7 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
 
     /** Main-thread lifecycle cleanup, including configuration reload. */
     fun closeAll() {
+        invero.closeAll()
         arc?.closeAll()
         plugin.server.onlinePlayers.filter { it.openInventory.topInventory.holder is HomeMenuHolder }.forEach(Player::closeInventory)
     }

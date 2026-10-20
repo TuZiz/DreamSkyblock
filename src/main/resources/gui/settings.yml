@@ -1,263 +1,47 @@
 schema-version: 1
-# 家园 Flag 设置菜单，所有旗标均可由此配置和切换。
+# 设置分类入口，世界规则和访客权限分别打开独立菜单。
+title: "<#74B9FF><b>空岛设置</b>"
 Shape:
-  - "#########"
-  - "#abcefg #"
-  - "#hijklmn#"
-  - "#opqrstu#"
-  - "#vwxyz ?#"
+  - "########?"
+  - "#       #"
+  - "#  W V  #"
+  - "#       #"
   - "####A####"
-title: "<#74B9FF><b>空岛权限与设置</b>"
 status:
   preview: "<#FBBF24>当前为说明预览，加入空岛后可修改"
   manage: "<#34D399>点击设置按钮切换，提交成功后生效"
-  enabled: "<#1DD1A1>✔ 开启"
-  disabled: "<#FF6B6B>✖ 关闭"
 components:
   border:
     symbol: "#"
     material: BLACK_STAINED_GLASS_PANE
     name: "<#2D3436> "
     lore:
-  pvp:
-    symbol: a
-    action: toggle:pvp
-    material: IRON_SWORD
-    name: "<#74B9FF><b>⚔ 玩家对战 (PVP)</b> <#A1B2C3>| <status>"
+  rules:
+    symbol: W
+    action: menu:world_rules
+    material: COMPARATOR
+    name: "<#74B9FF><b>世界规则</b>"
     lore:
-      - "<#C8D6E5>▪ 控制家园内玩家之间是否能造成伤害"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  monster_spawn:
-    symbol: b
-    action: toggle:monster_spawn
-    material: ZOMBIE_HEAD
-    name: "<#74B9FF><b>🧟 怪物生成</b> <#A1B2C3>| <status>"
+      - "<#CBD5E1>管理 PVP、生物生成、天气与环境行为"
+      - "<#FDCB6E>点击打开世界规则"
+  visitors:
+    symbol: V
+    action: menu:visitor_permissions
+    material: IRON_DOOR
+    name: "<#00D2D3><b>访客权限</b>"
     lore:
-      - "<#C8D6E5>▪ 控制家园内是否允许自然刷新敌对生物"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  animal_spawn:
-    symbol: c
-    action: toggle:animal_spawn
-    material: WHEAT
-    name: "<#74B9FF><b>🐄 动物生成</b> <#A1B2C3>| <status>"
+      - "<#CBD5E1>管理访客建造、容器与实体互动权限"
+      - "<#FDCB6E>点击打开访客权限"
+  guide:
+    symbol: "?"
+    material: BOOK
+    name: "<#FBBF24>设置说明"
     lore:
-      - "<#C8D6E5>▪ 控制家园内是否允许自然刷新友善动物"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  flight:
-    symbol: e
-    action: toggle:flight
-    material: FEATHER
-    name: "<#74B9FF><b>🕊️ 允许飞行</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制家园内的玩家是否可以使用飞行能力"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  weather:
-    symbol: f
-    action: toggle:weather
-    material: SUNFLOWER
-    name: "<#74B9FF><b>🌦️ 天气循环</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制家园内的天气是否会自然变化"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  fire_spread:
-    symbol: g
-    action: toggle:fire_spread
-    material: FLINT_AND_STEEL
-    name: "<#74B9FF><b>🔥 火焰蔓延</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制家园内的火焰是否会燃烧并蔓延"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  tnt_explosion:
-    symbol: h
-    action: toggle:tnt_explosion
-    material: TNT
-    name: "<#74B9FF><b>💣 TNT 爆炸</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制爆炸物是否会破坏家园内的地形方块"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  entity_grief:
-    symbol: i
-    action: toggle:entity_grief
-    material: CREEPER_HEAD
-    name: "<#74B9FF><b>💥 生物破坏方块</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制苦力怕、末影人等生物是否能破坏方块"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  liquid_flow:
-    symbol: j
-    action: toggle:liquid_flow
-    material: WATER_BUCKET
-    name: "<#74B9FF><b>🌊 液体流动</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制家园内的水和岩浆是否能够自然流动"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  portal_nether:
-    symbol: k
-    action: toggle:portal_nether
-    material: OBSIDIAN
-    name: "<#74B9FF><b>🌋 地狱传送门</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制家园内是否允许激活地狱传送门"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  portal_end:
-    symbol: l
-    action: toggle:portal_end
-    material: END_PORTAL_FRAME
-    name: "<#74B9FF><b>🌌 末地传送门</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制家园内是否允许激活末地传送门"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_place:
-    symbol: m
-    action: toggle:stranger_place
-    material: BRICKS
-    name: "<#00D2D3><b>🧱 访客权限: 放置方块</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以在家园中放置方块"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_break:
-    symbol: n
-    action: toggle:stranger_break
-    material: DIAMOND_PICKAXE
-    name: "<#00D2D3><b>⛏️ 访客权限: 破坏方块</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以在家园中破坏方块"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_container:
-    symbol: o
-    action: toggle:stranger_container
-    material: CHEST
-    name: "<#00D2D3><b>📦 访客权限: 打开容器</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以打开箱子、熔炉等容器"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_door:
-    symbol: p
-    action: toggle:stranger_door
-    material: OAK_DOOR
-    name: "<#00D2D3><b>🚪 访客权限: 开关门</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以使用木门、活板门等"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_button:
-    symbol: q
-    action: toggle:stranger_button
-    material: STONE_BUTTON
-    name: "<#00D2D3><b>🔘 访客权限: 使用按钮</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以使用按钮和拉杆"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_pressure_plate:
-    symbol: r
-    action: toggle:stranger_pressure_plate
-    material: STONE_PRESSURE_PLATE
-    name: "<#00D2D3><b>👣 访客权限: 触发踏板</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以踩下压力板"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_block_interact:
-    symbol: s
-    action: toggle:stranger_block_interact
-    material: OAK_SIGN
-    name: "<#00D2D3><b>🖐 访客权限: 方块交互</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以与工作台、告示牌等交互"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_entity_interact:
-    symbol: t
-    action: toggle:stranger_entity_interact
-    material: LEAD
-    name: "<#00D2D3><b>🐎 访客权限: 实体交互</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以与村民、动物等实体交互"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_attack_animal:
-    symbol: u
-    action: toggle:stranger_attack_animal
-    material: BEEF
-    name: "<#00D2D3><b>🔪 访客权限: 攻击动物</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以攻击家园内的友善动物"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_attack_monster:
-    symbol: v
-    action: toggle:stranger_attack_monster
-    material: IRON_SWORD
-    name: "<#00D2D3><b>🏹 访客权限: 攻击怪物</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以攻击家园内的敌对怪物"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_pickup:
-    symbol: w
-    action: toggle:stranger_pickup
-    material: HOPPER
-    name: "<#00D2D3><b>🧲 访客权限: 拾取物品</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以在家园中拾取掉落物"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_drop:
-    symbol: x
-    action: toggle:stranger_drop
-    material: DROPPER
-    name: "<#00D2D3><b>🗑️ 访客权限: 丢弃物品</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以在家园中丢弃物品"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_bucket:
-    symbol: y
-    action: toggle:stranger_bucket
-    material: BUCKET
-    name: "<#00D2D3><b>🪣 访客权限: 使用桶</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以倒水、装水或使用岩浆桶"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
-  stranger_vehicle:
-    symbol: z
-    action: toggle:stranger_vehicle
-    material: MINECART
-    name: "<#00D2D3><b>🛶 访客权限: 使用载具</b> <#A1B2C3>| <status>"
-    lore:
-      - "<#C8D6E5>▪ 控制访客是否可以放置和乘坐船与矿车"
-      - ""
-      - "<#FDCB6E>▶ 点击即可切换状态"
+      - "<#CBD5E1>团队成员共享空岛管理权限"
+      - "<settings_access>"
   back:
     symbol: A
     action: menu:main
     material: ARROW
-    name: "<#FF6B6B><b>返回空岛主菜单</b>"
+    name: "<#FF6B6B>返回空岛主菜单"
     lore:
-      - "<#C8D6E5>▪ 返回我的空岛，已提交的更改保持生效"
-  guide:
-    symbol: "?"
-    material: BOOK
-    name: "<#FBBF24><b>权限与设置说明</b>"
-    lore:
-      - "<#CBD5E1>世界规则控制 PVP、生物生成与天气等"
-      - "<#CBD5E1>访客权限可分别开放方块、容器与实体互动"
-      - "<#CBD5E1>团队成员拥有同等管理与建造权限"
-      - "<#CBD5E1>空岛无人后保存，重访会加载同一份存档"
-      - "<settings_access>"

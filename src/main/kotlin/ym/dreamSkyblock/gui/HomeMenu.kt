@@ -8,7 +8,7 @@ import java.util.UUID
 enum class HomeMenu(val file: String) {
     MAIN("main"), ISLAND("island"), CONFIRM("create_confirm"),
     INVITES("invites"), MEMBERS("members"), PLAYERS("invite_players"), MEMBER_CONFIRM("member_confirm"),
-    SETTINGS("settings"), HELP("help")
+    SETTINGS("settings"), WORLD_RULES("world_rules"), VISITOR_PERMISSIONS("visitor_permissions"), HELP("help")
 }
 
 data class MenuRequest(val menu: HomeMenu, val page: Int = 0, val template: String? = null, val member: UUID? = null)

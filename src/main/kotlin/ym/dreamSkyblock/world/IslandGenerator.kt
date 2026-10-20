@@ -22,15 +22,11 @@ object IslandGenerator {
         val tz = z + 2
         for (dy in 0..3) world.getBlockAt(tx, ty + dy, tz).setType(Material.OAK_LOG, false)
         val leaves = Material.OAK_LEAVES.createBlockData() as Leaves
-        leaves.isPersistent = true
-        leaves.distance = 1
-        for (dy in 2..4) {
-            val radius = if (dy == 4) 1 else 2
-            for (dx in -radius..radius) for (dz in -radius..radius) {
-                if (dy == 2 && kotlin.math.abs(dx) == 2 && kotlin.math.abs(dz) == 2) continue
-                if (dx == 0 && dz == 0 && dy < 4) continue
-                world.getBlockAt(tx + dx, ty + dy, tz + dz).setBlockData(leaves.clone(), false)
-            }
+        leaves.isPersistent = false
+        for ((lx, ly, lz) in StarterTreeLeaves.canopy(template)) {
+            val data = leaves.clone() as Leaves
+            data.distance = kotlin.math.abs(lx - tx) + kotlin.math.abs(lz - tz) + (ly - (ty + 3)).coerceAtLeast(0)
+            world.getBlockAt(lx, ly, lz).setBlockData(data, true)
         }
     }
 }

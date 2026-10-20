@@ -34,6 +34,8 @@ class HomeMaintenanceService(
                     snapshot
                 }
             }.thenCompose { snapshot ->
+                storage.backupDatabase("recovery").thenApply { snapshot }
+            }.thenCompose { snapshot ->
                 CompletableFuture.supplyAsync({ files.restore(home.id, backupId); snapshot }, io)
             }.thenCompose { snapshot -> storage.restoreSnapshot(snapshot, io) }
             .thenApplyAsync({ restored -> files.acknowledgeRestore(home.id); restored }, io)
@@ -41,7 +43,7 @@ class HomeMaintenanceService(
 
     fun delete(home: Home): CompletableFuture<Void> = worlds.maintain(home, evacuate = true) {
         val metadata = storage.snapshot(home).toYaml()
-        CompletableFuture.runAsync({
+        storage.backupDatabase("recovery").thenCompose { CompletableFuture.runAsync({
             val marker = deleteMarker(home)
             Files.createDirectories(marker.parent)
             if (!Files.exists(marker)) {
@@ -49,7 +51,7 @@ class HomeMaintenanceService(
             }
             check(Files.readString(marker) == metadata) { "删除操作记录与家园快照不一致: $marker" }
             files.archiveDeleted(home.id, metadata)
-        }, io).thenCompose { storage.delete(home, io) }.thenRunAsync({ Files.deleteIfExists(deleteMarker(home)) }, io)
+        }, io) }.thenCompose { storage.delete(home, io) }.thenRunAsync({ Files.deleteIfExists(deleteMarker(home)) }, io)
     }
 
     fun recover(): CompletableFuture<Void> = CompletableFuture.supplyAsync({
@@ -85,7 +87,9 @@ class HomeMaintenanceService(
                     .thenCompose { storage.delete(home, io) }.thenRunAsync({ Files.deleteIfExists(marker) }, io)
             }
         }
-        chain
+        chain.thenCompose { storage.recoverOwnership(files) }.thenAccept { messages ->
+            messages.forEach { java.util.logging.Logger.getLogger("DreamSkyblock").warning(it) }
+        }
     }
 
     private fun deleteMarker(home: Home): Path = pluginRoot.resolve("data/operations/${home.id}.delete.yml")

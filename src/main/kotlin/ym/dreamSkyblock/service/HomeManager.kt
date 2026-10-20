@@ -153,6 +153,22 @@ class HomeManager(
         worlds.load(home, template, player) { ok -> if (!ok && player.isOnline) messages.send(player, "home.load-failed") }
     }
 
+    /** Paper 主线程。忙时由登录协调器稍后重试；发起后再次检查会话与归属。 */
+    fun returnOnLogin(player: Player, homeId: UUID, current: () -> Boolean, done: (Boolean) -> Unit): Boolean {
+        val home = byPlayer(player.uniqueId) ?: return false
+        if (!ready || restoring.get() || player.uniqueId in playerLocks || home.id != homeId || !available(home)) return false
+        val template = config.templates[home.templateId] ?: return false
+        worlds.loadForLogin(home, template, player, {
+            current() && ready && player.isOnline && player.hasPermission("dreamskyblock.use") &&
+                byPlayer(player.uniqueId) === home && home.isOwner(player.uniqueId) &&
+                !restoring.get() && player.uniqueId !in playerLocks && available(home)
+        }) { ok ->
+            if (!ok && current() && player.isOnline) messages.send(player, "home.load-failed")
+            done(ok)
+        }
+        return true
+    }
+
     fun invite(owner: Player, target: Player) {
         if (!allow(owner)) return
         val home = byPlayer(owner.uniqueId) ?: return messages.send(owner, "home.none")

@@ -15,10 +15,12 @@ import ym.dreamSkyblock.listener.HomeOccupancyListener
 import ym.dreamSkyblock.listener.HomeProtectionListener
 import ym.dreamSkyblock.placeholder.DreamSkyblockExpansion
 import ym.dreamSkyblock.reminder.NoHomeReminder
+import ym.dreamSkyblock.login.HomeLoginReturn
 import ym.dreamSkyblock.service.HomeManager
 import ym.dreamSkyblock.service.HomeLevelService
 import ym.dreamSkyblock.storage.HomeMaintenanceService
 import ym.dreamSkyblock.storage.HomeStorage
+import ym.dreamSkyblock.storage.DatabaseBackupTask
 import ym.dreamSkyblock.storage.LegacyHomeMigration
 import ym.dreamSkyblock.text.MessageService
 import ym.dreamSkyblock.world.HomeWorldManager
@@ -37,9 +39,11 @@ class DreamSkyblock : JavaPlugin() {
     lateinit var levelService: HomeLevelService
         private set
     private var storage: HomeStorage? = null
+    private var databaseBackups: DatabaseBackupTask? = null
     private var expansion: DreamSkyblockExpansion? = null
     private var gui: HomeGuiManager? = null
     private var reminders: NoHomeReminder? = null
+    private var loginReturn: HomeLoginReturn? = null
     private var borderDisplay: HomeBorderDisplay? = null
     private var values: HomeValueService? = null
     private val ioExecutor = Executors.newFixedThreadPool(2) { runnable -> Thread(runnable, "DreamSkyblock-IO").apply { isDaemon = false } }
@@ -83,6 +87,9 @@ class DreamSkyblock : JavaPlugin() {
         getCommand("home")?.apply { setExecutor(command); setTabCompleter(command) }
         server.pluginManager.registerEvents(HomeProtectionListener(homeManager, worldManager), this)
         server.pluginManager.registerEvents(HomeOccupancyListener(homeManager, worldManager, configService), this)
+        val loginReturn = HomeLoginReturn(this, homeManager, worldManager).also { this.loginReturn = it }
+        server.pluginManager.registerEvents(loginReturn, this)
+        loginReturn.start()
         val borderDisplay = HomeBorderDisplay(this, homeManager, worldManager).also { this.borderDisplay = it }
         server.pluginManager.registerEvents(borderDisplay, this)
         borderDisplay.start()
@@ -99,14 +106,17 @@ class DreamSkyblock : JavaPlugin() {
         if (server.pluginManager.isPluginEnabled("PlaceholderAPI")) expansion = DreamSkyblockExpansion(this, levelService).also { it.register() }
         homeManager.load {
             logger.info("DreamSkyblock 已加载 ${homeManager.all().size} 个家园，SQLite=${database.databasePath}, world-root=${server.levelDirectory}")
-            CompletableFuture.runAsync({ files.audit(homeManager.all().map { it.id }.toSet()).forEach { path ->
-                logger.severe("检测到无归属世界，保留原目录，禁止自动删除: $path")
-            } }, ioExecutor).exceptionally { logger.log(Level.SEVERE, "世界归属审计失败", it); null }
+            if (!stopping && isEnabled) {
+                databaseBackups = DatabaseBackupTask(this, database).also { it.start() }
+                logger.info("归属恢复核对完成；待处理清单=data/recovery/pending-worlds.properties；SQLite每15分钟一致性备份，保留最近8份")
+            }
         }
     }
 
     override fun onDisable() {
         stopping = true
+        databaseBackups?.stop(); databaseBackups = null
+        loginReturn?.stop(); loginReturn = null
         values?.stop(); values = null
         reminders?.stop(); reminders = null
         borderDisplay?.stop(); borderDisplay = null

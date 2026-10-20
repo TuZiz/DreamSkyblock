@@ -42,7 +42,11 @@ class HomeWorldManager(
     fun create(home: Home, template: HomeTemplate, player: Player, done: (Boolean) -> Unit) = visit(home, template, player, true, done)
     fun load(home: Home, template: HomeTemplate, player: Player?, done: (Boolean) -> Unit) = visit(home, template, player, false, done)
 
-    private fun visit(home: Home, template: HomeTemplate, player: Player?, fresh: Boolean, done: (Boolean) -> Unit) {
+    /** 主线程入口/门禁；加载可以继续完成，但失效登录会话不得触发迟到传送。 */
+    fun loadForLogin(home: Home, template: HomeTemplate, player: Player, current: () -> Boolean, done: (Boolean) -> Unit) =
+        visit(home, template, player, false, done, current)
+
+    private fun visit(home: Home, template: HomeTemplate, player: Player?, fresh: Boolean, done: (Boolean) -> Unit, current: () -> Boolean = { true }) {
         if (stopped || isBusy(home) || home.status == "DELETED" || home.status == "RECOVERY") { done(false); return }
         cancelUnload(home)
         operations.submit(home.id) {
@@ -51,7 +55,8 @@ class HomeWorldManager(
             }
             open(home, template, fresh).thenCompose { world ->
                 tasks.global {
-                    if (player == null || !player.isOnline) CompletableFuture.completedFuture(true)
+                    if (!current()) CompletableFuture.completedFuture(false)
+                    else if (player == null || !player.isOnline) CompletableFuture.completedFuture(true)
                     else {
                         check(home.isOwner(player.uniqueId) && player.hasPermission("dreamskyblock.use")) { "访问期间权限或家园归属已改变" }
                         val point = home.spawn ?: template.spawn
@@ -80,6 +85,7 @@ class HomeWorldManager(
                     check(!fresh) { "新家园ID已加载，拒绝覆盖" }
                     track(home, existing)
                     HomeWorldSettings.apply(existing, home, template, false)
+                    StarterTreeLeaves.repairLoaded(existing, template)
                     existing
                 } else {
                     val point = home.spawn ?: template.spawn
@@ -95,6 +101,7 @@ class HomeWorldManager(
                     }
                     HomeWorldSettings.apply(world, home, template, fresh)
                     if (fresh && template.generator == HomeTemplate.GeneratorType.SKYBLOCK) IslandGenerator.generate(world, template)
+                    StarterTreeLeaves.repairLoaded(world, template)
                     if (fresh) world.save(true)
                     world
                 }
@@ -113,8 +120,16 @@ class HomeWorldManager(
     fun adopt(homes: Collection<Home>) {
         homes.forEach { home -> plugin.server.getWorld(key(home))?.let { world ->
             track(home, world)
+            config.templates[home.templateId]?.let { StarterTreeLeaves.repairLoaded(world, it) }
             if (world.players.isEmpty()) scheduleUnload(home, config.unloadDelaySeconds)
         } }
+    }
+
+    /** ChunkLoadEvent/main thread; unloaded portions are repaired only when Paper loads them naturally. */
+    fun repairStarterLeaves(chunk: org.bukkit.Chunk) {
+        if (stopped) return
+        val home = homeByWorld(chunk.world)?.let(records::get) ?: return
+        config.templates[home.templateId]?.let { StarterTreeLeaves.repair(chunk, it) }
     }
 
     fun forgot(world: World) {
@@ -155,7 +170,7 @@ class HomeWorldManager(
     private fun unloadEmpty(home: Home): Boolean {
         val world = loaded[home.id] ?: plugin.server.getWorld(key(home)) ?: return true
         if (world.players.isNotEmpty()) return false
-        world.save(true)
+        // Paper 的 save=true 已负责保存并关闭存档；不要在它之前再完整 flush 一次。
         if (!plugin.server.unloadWorld(world, true)) return false
         loaded.remove(home.id, world)
         records.remove(home.id)
@@ -193,8 +208,12 @@ class HomeWorldManager(
         pendingUnload.clear()
         loaded.values.toList().forEach { world ->
             try {
-                world.save(true)
-                if (world.players.isEmpty() && !plugin.server.unloadWorld(world, true)) plugin.logger.warning("停止时无法卸载世界 ${world.key}；保留永久存档由服务器关闭流程继续保存")
+                if (world.players.isNotEmpty()) world.save(true)
+                else if (!plugin.server.unloadWorld(world, true)) {
+                    // 其他插件取消卸载时世界仍然注册，必须补做一次停用保存。
+                    world.save(true)
+                    plugin.logger.warning("停止时无法卸载世界 ${world.key}；已保存并保留永久存档由服务器关闭流程继续保存")
+                }
             } catch (error: Throwable) { plugin.logger.log(Level.SEVERE, "停止保存世界失败 ${world.key}，保留永久存档", error) }
         }
         loaded.clear()

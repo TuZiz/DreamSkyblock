@@ -24,6 +24,8 @@ object HomeWorldSettings {
         world.setPVP(value(HomeFlag.PVP))
         world.setSpawnFlags(value(HomeFlag.ANIMAL_SPAWN), value(HomeFlag.MONSTER_SPAWN))
         world.setGameRule(GameRule.DO_WEATHER_CYCLE, value(HomeFlag.WEATHER))
+        // Internal vanilla rate: leaves decay and crops grow normally; not exposed as a player flag.
+        world.setGameRule(GameRule.RANDOM_TICK_SPEED, 3)
         world.players.forEach { player ->
             player.allowFlight = value(HomeFlag.FLIGHT)
             if (!player.allowFlight) player.isFlying = false

@@ -6,13 +6,33 @@ schema-version: 1
 title: "<gradient:#00F2FE:#4FACFE:#FFD700><b>✦ 我的空岛 ✦</b></gradient>"
 
 Shape:
-  - "+###I###H"
+  - "W###I###H"
   - "# M S U #"
   - "#   T   #"
-  - "#       #"
+  - '#G     C#'
   - "+###X###+"
 
 components:
+  warehouse:
+    symbol: "C"
+    material: "CHEST"
+    name: "<gradient:#F6D365:#FDA085><b>中央仓库</b></gradient>"
+    lore:
+      - "<#67E8F9>打开当前空岛的中央仓库"
+      - "<#5EEAD4>本岛成员共享仓库资源"
+      - ""
+      - "<#FFD700>▸ 点击打开中央仓库"
+    action: "warehouse"
+
+  spawn:
+    symbol: "W"
+    material: "COMPASS"
+    name: "<italic:false><gradient:#00F2FE:#4FACFE><b>返回主城</b></gradient>"
+    lore:
+      - "<italic:false><#67E8F9>传送到 world 世界当前的出生点"
+      - "<italic:false><#FFD700>▸ 点击立即传送"
+    action: "spawn"
+
   border:
     symbol: "#"
     material: "CYAN_STAINED_GLASS_PANE"
@@ -90,6 +110,15 @@ components:
       - ""
       - "<#FFD700>▸ <b>点击立即传送</b>"
     action: "teleport"
+
+  holograms:
+    symbol: 'G'
+    material: 'NAME_TAG'
+    name: '<italic:false><#67E8F9>全息字开关'
+    lore:
+      - '<italic:false><#CBD5E1>点击开启或关闭本岛生成器全息字'
+      - '<italic:false><#94A3B8>共同主人共享设置，不影响生成器生产'
+    action: 'holograms'
 
   close:
     symbol: "X"

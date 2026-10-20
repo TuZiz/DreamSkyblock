@@ -1,0 +1,6 @@
+schema-version: 1
+# 保留可选接管配置，默认关闭；Invero 仅提供服务器主菜单。
+# 空岛功能继续使用本插件原箱子菜单。
+enabled: false
+main-menu: dreamskyblock-main
+island-menu: dreamskyblock-island

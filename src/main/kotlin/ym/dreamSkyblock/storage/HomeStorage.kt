@@ -23,6 +23,13 @@ class HomeStorage(val databasePath: Path) {
     private var closing = false
     private var closeFuture: CompletableFuture<Void>? = null
 
+    /** Dedicated database worker; no Bukkit access and no live world file mutations. */
+    fun recoverOwnership(files: ym.dreamSkyblock.world.NativeWorldFiles): CompletableFuture<List<String>> = submit {
+        HomeOwnershipRecovery(databasePath.toAbsolutePath().parent.resolve("recovery/pending-worlds.properties")).recover(repository, files)
+    }
+
+    fun backupDatabase(reason: String): CompletableFuture<Path> = submit { repository.backupDatabase(reason) }
+
     @Suppress("UNUSED_PARAMETER")
     fun loadAll(executor: Executor): CompletableFuture<List<Home>> = submit { repository.loadAll().map(HomeSnapshot::toHome) }
 

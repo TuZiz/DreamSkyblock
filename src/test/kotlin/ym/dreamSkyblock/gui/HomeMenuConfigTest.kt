@@ -19,8 +19,20 @@ class HomeMenuConfigTest {
             assertEquals(1, yaml.getInt("schema-version"), path.toString())
             HomeGuiConfig.validate(path.toString(), yaml)
             assertTrue(yaml.getStringList("Shape").all { !it.contains('<') && it.length == 9 })
-            assertFalse(Files.readString(path).contains("<italic:false>"), "统一渲染入口处理默认斜体")
+            // Explicit non-italic entries and renderer defaults are both supported.
         }
+    }
+
+    @Test fun `island menu exposes hologram toggle without replacing other actions`() {
+        val yaml = YamlConfiguration().apply { loadFromString(Files.readString(Path.of("src/main/resources/gui/island.yml"))) }
+        HomeGuiConfig.validate("gui/island.yml", yaml)
+        assertEquals("#G     C#", yaml.getStringList("Shape")[3])
+        assertEquals("holograms", yaml.getString("components.holograms.action"))
+        assertEquals("teleport", yaml.getString("components.teleport.action"))
+        assertEquals("menu:members", yaml.getString("components.members.action"))
+        val messages = MessageService(YamlConfiguration())
+        val name = messages.componentRaw(yaml.getString("components.holograms.name")!!)
+        assertEquals(TextDecoration.State.FALSE, name.decoration(TextDecoration.ITALIC))
     }
 
     @Test fun `layout markup and unknown actions fail with configuration context`() {
@@ -31,6 +43,96 @@ class HomeMenuConfigTest {
         yaml.set("Shape", listOf("#########"))
         yaml.set("components.create.action", "missing:action")
         assertThrows(IllegalArgumentException::class.java) { HomeGuiConfig.validate("gui/main.yml", yaml) }
+    }
+
+    @Test fun `spawn entry occupies top left and renders without italic`() {
+        val yaml = YamlConfiguration().apply { loadFromString(Files.readString(Path.of("src/main/resources/gui/island.yml"))) }
+        HomeGuiConfig.validate("gui/island.yml", yaml)
+        assertEquals(yaml.getString("components.spawn.symbol"), yaml.getStringList("Shape").first().take(1))
+        assertEquals("spawn", yaml.getString("components.spawn.action"))
+        assertEquals("COMPASS", yaml.getString("components.spawn.material"))
+        val messages = MessageService(YamlConfiguration())
+        val texts = listOf(yaml.getString("components.spawn.name")!!) + yaml.getStringList("components.spawn.lore")
+        texts.forEach { text ->
+            fun verify(node: Component, italic: TextDecoration.State = TextDecoration.State.NOT_SET) {
+                val effective = node.decoration(TextDecoration.ITALIC).takeUnless { it == TextDecoration.State.NOT_SET } ?: italic
+                assertEquals(TextDecoration.State.FALSE, effective)
+                node.children().forEach { verify(it, effective) }
+            }
+            verify(messages.componentRaw(text))
+        }
+    }
+
+    @Test fun `warehouse entry occupies requested slot and uses plain YAML styles`() {
+        val yaml = YamlConfiguration().apply { loadFromString(Files.readString(Path.of("src/main/resources/gui/island.yml"))) }
+        HomeGuiConfig.validate("gui/island.yml", yaml)
+        assertEquals(yaml.getString("components.warehouse.symbol")!!.single(), yaml.getStringList("Shape").joinToString("")[34])
+        assertEquals("warehouse", yaml.getString("components.warehouse.action"))
+        assertEquals("CHEST", yaml.getString("components.warehouse.material"))
+        val renderer = HomeMenuRenderer(MessageService(YamlConfiguration()))
+        val texts = listOf(yaml.getString("components.warehouse.name")!!) + yaml.getStringList("components.warehouse.lore")
+        texts.forEach { raw ->
+            assertFalse(raw.contains("italic"), "YAML delegates italic control to the renderer")
+            verifyNonItalic(renderer.itemText(raw))
+        }
+        verifyNonItalic(renderer.itemText("<italic><#CBD5E1>外层 <value></italic>", mapOf("value" to "<italic><#C4B5FD>动态子组件</italic>")))
+        val plugin = YamlConfiguration().apply { loadFromString(Files.readString(Path.of("src/main/resources/plugin.yml"))) }
+        assertTrue(plugin.getBoolean("permissions.dreamskyblock.use.children.genlite.use"))
+    }
+
+    @Test fun `legacy island gains warehouse idempotently with custom symbol collision`() {
+        val defaults = YamlConfiguration().apply { loadFromString(Files.readString(Path.of("src/main/resources/gui/island.yml"))) }
+        val yaml = YamlConfiguration().apply { loadFromString(defaults.saveToString()) }
+        yaml.set("components.warehouse", null)
+        yaml.set("Shape", yaml.getStringList("Shape").map { it.replace('C', ' ') })
+        yaml.set("components.custom.symbol", "C")
+        yaml.set("components.custom.material", "STONE")
+        yaml.set("components.custom.name", "custom")
+        yaml.set("custom-field", "preserved")
+        val before = yaml.getStringList("Shape").joinToString("")
+        HomeGuiConfig.migrateWarehouse(yaml, defaults)
+        HomeGuiConfig.validate("gui/island.yml", yaml)
+        val symbol = yaml.getString("components.warehouse.symbol")!!.single()
+        assertNotEquals('C', symbol)
+        assertEquals(before.replaceRange(34, 35, symbol.toString()), yaml.getStringList("Shape").joinToString(""))
+        assertEquals("preserved", yaml.getString("custom-field"))
+        yaml.set("components.warehouse.name", "custom warehouse")
+        val after = yaml.saveToString()
+        HomeGuiConfig.migrateWarehouse(yaml, defaults)
+        assertEquals(after, yaml.saveToString())
+    }
+
+    private fun verifyNonItalic(component: Component) {
+        assertEquals(TextDecoration.State.FALSE, component.decoration(TextDecoration.ITALIC))
+        component.children().forEach(::verifyNonItalic)
+    }
+
+    @Test fun `legacy island gains spawn while retaining layout and custom data`() {
+        val defaults = YamlConfiguration().apply { loadFromString(Files.readString(Path.of("src/main/resources/gui/island.yml"))) }
+        val yaml = YamlConfiguration().apply { loadFromString(defaults.saveToString()) }
+        yaml.set("components.spawn", null)
+        val originalShape = yaml.getStringList("Shape").toMutableList().apply { this[0] = "+" + this[0].substring(1) }
+        yaml.set("Shape", originalShape)
+        yaml.set("custom-field", "preserved")
+        yaml.set("components.info.name", "custom island")
+        // An existing custom component may already own the default symbol.
+        yaml.set("components.custom.symbol", "W")
+        yaml.set("components.custom.material", "STONE")
+        yaml.set("components.custom.name", "custom item")
+        HomeGuiConfig.migrateSpawn(yaml, defaults)
+        HomeGuiConfig.validate("gui/island.yml", yaml)
+        val symbol = yaml.getString("components.spawn.symbol")!!
+        assertNotEquals("W", symbol)
+        assertEquals(symbol + originalShape.first().substring(1), yaml.getStringList("Shape").first())
+        assertEquals(originalShape.drop(1), yaml.getStringList("Shape").drop(1))
+        assertEquals("preserved", yaml.getString("custom-field"))
+        assertEquals("custom island", yaml.getString("components.info.name"))
+        assertEquals("W", yaml.getString("components.custom.symbol"))
+        assertEquals("spawn", yaml.getString("components.spawn.action"))
+        yaml.set("components.spawn.name", "custom spawn")
+        val migrated = yaml.saveToString()
+        HomeGuiConfig.migrateSpawn(yaml, defaults)
+        assertEquals(migrated, yaml.saveToString(), "migration preserves an existing entry and is idempotent")
     }
 
     @Test fun `single help migration replaces old links while preserving custom fields`() {

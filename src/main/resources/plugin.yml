@@ -8,13 +8,16 @@ folia-supported: false
 softdepend:
   - PlaceholderAPI
   - ArcMenu
+  - Invero
 
 commands:
   home:
     description: 家园主命令
-    usage: /home <create|tp|invite|accept|deny|leave|delete|settings|help|reload|backup|restore|migrate>
+    usage: /home [gui|create|tp|invite|accept|deny|leave|delete|settings|help|reload|backup|restore|migrate] （别名 /is、/家；支持中文子命令）
     aliases:
       - dsb
+      - is
+      - 家
     permission: dreamskyblock.use
 
 permissions:
@@ -23,6 +26,7 @@ permissions:
     default: true
     children:
       arcmenu.use: true
+      genlite.use: true
   dreamskyblock.admin:
     description: 管理 DreamSkyblock 并绕过家园陌生人保护
     default: op

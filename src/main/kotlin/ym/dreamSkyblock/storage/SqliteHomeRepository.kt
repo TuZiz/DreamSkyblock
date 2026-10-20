@@ -15,6 +15,15 @@ import java.util.UUID
 class SqliteHomeRepository(val databasePath: Path) : AutoCloseable {
     private var connection: Connection? = null
     private var closed = false
+    internal val recoveryJournal = HomeRecoveryJournal(databasePath.toAbsolutePath().parent.resolve("recovery/homes"))
+    private val transactionEvidence = linkedMapOf<UUID, HomeSnapshot>()
+    private var recoveryWriteFailed = false
+    internal var transactionCheckpoint: (String) -> Unit = {}
+
+    @Synchronized
+    fun backupDatabase(reason: String): Path = SqliteDatabaseBackups(
+        databasePath.toAbsolutePath().parent.resolve("backups/recovery")
+    ).create(database(), reason)
 
     @Synchronized
     fun loadAll(): List<HomeSnapshot> = readHomes(false)
@@ -49,6 +58,7 @@ class SqliteHomeRepository(val databasePath: Path) : AutoCloseable {
         require(newStatus in HomeSnapshot.STATUSES) { "home $id: status 无效: $newStatus" }
         val existing = status(database, id) ?: error("home $id: 数据库中不存在，不能变更生命周期")
         require(existing != "DELETED" || newStatus == "DELETED") { "home $id: 已删除；必须显式 restoreSnapshot 才能恢复" }
+        prepareEvidence(readHomes(true, id).single().withStatus(newStatus))
         database.prepareStatement("UPDATE homes SET status=? WHERE home_id=?").use {
             it.setString(1, newStatus); it.setString(2, id.toString()); check(it.executeUpdate() == 1)
         }
@@ -65,10 +75,11 @@ class SqliteHomeRepository(val databasePath: Path) : AutoCloseable {
         restored
     }
 
-    private fun readHomes(includingDeleted: Boolean): List<HomeSnapshot> {
+    private fun readHomes(includingDeleted: Boolean, id: UUID? = null): List<HomeSnapshot> {
         val database = database()
-        val condition = if (includingDeleted) "" else " WHERE status <> 'DELETED'"
+        val condition = if (id != null) " WHERE home_id=?" else if (includingDeleted) "" else " WHERE status <> 'DELETED'"
         return database.prepareStatement("SELECT * FROM homes$condition ORDER BY home_id").use { statement ->
+            if (id != null) statement.setString(1, id.toString())
             statement.executeQuery().use { result ->
                 buildList {
                     while (result.next()) {
@@ -128,6 +139,7 @@ class SqliteHomeRepository(val databasePath: Path) : AutoCloseable {
                 }
             }
         }
+        prepareEvidence(snapshot)
         database.prepareStatement("""
             INSERT INTO homes (home_id, world_key, owner_name, template_id, center_x, center_y, center_z, center_yaw, center_pitch,
                 spawn_x, spawn_y, spawn_z, spawn_yaw, spawn_pitch, border_size, level, experience, border_level, member_limit, status)
@@ -181,18 +193,35 @@ class SqliteHomeRepository(val databasePath: Path) : AutoCloseable {
         }
 
     private fun <T> transaction(block: (Connection) -> T): T {
+        check(!recoveryWriteFailed) { "homes.db: 上次提交后的恢复凭据写入失败，已暂停后续写入；请修复磁盘并重启核对" }
         val database = database()
+        transactionEvidence.clear()
         database.autoCommit = false
         try {
             val result = block(database)
+            transactionCheckpoint("before-commit")
             database.commit()
+            try {
+                transactionCheckpoint("after-commit")
+                transactionEvidence.values.forEach { recoveryJournal.write(it, true) }
+            }
+            catch (error: Exception) {
+                recoveryWriteFailed = true
+                throw IllegalStateException("homes.db: SQLite已提交但恢复凭据落盘失败；已暂停后续写入，重启后以SQLite核对", error)
+            }
             return result
         } catch (error: Throwable) {
             runCatching { database.rollback() }.exceptionOrNull()?.let(error::addSuppressed)
             throw error
         } finally {
             database.autoCommit = true
+            transactionEvidence.clear()
         }
+    }
+
+    private fun prepareEvidence(snapshot: HomeSnapshot) {
+        recoveryJournal.write(snapshot, false)
+        transactionEvidence[snapshot.id] = snapshot
     }
 
     private fun database(): Connection {

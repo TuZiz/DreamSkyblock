@@ -8,12 +8,16 @@ import org.bukkit.event.player.PlayerJoinEvent
 import org.bukkit.event.player.PlayerQuitEvent
 import org.bukkit.event.player.PlayerTeleportEvent
 import org.bukkit.event.world.WorldUnloadEvent
+import org.bukkit.event.world.ChunkLoadEvent
 import ym.dreamSkyblock.config.ConfigService
 import ym.dreamSkyblock.service.HomeManager
 import ym.dreamSkyblock.world.HomeWorldManager
 
 /** 按实际世界人数统计，包括访客、跨空岛传送及退出；不按在线成员推断占用。 */
 class HomeOccupancyListener(private val homes: HomeManager, private val worlds: HomeWorldManager, private val config: ConfigService) : Listener {
+    @EventHandler
+    fun loaded(event: ChunkLoadEvent) { worlds.repairStarterLeaves(event.chunk) }
+
     @EventHandler
     fun join(event: PlayerJoinEvent) { worlds.homeByWorld(event.player.world)?.let(homes::byId)?.let(worlds::cancelUnload) }
 

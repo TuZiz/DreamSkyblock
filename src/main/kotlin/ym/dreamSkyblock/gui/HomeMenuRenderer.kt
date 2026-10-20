@@ -9,6 +9,8 @@ import org.bukkit.inventory.ItemStack
 import org.bukkit.Material
 import ym.dreamSkyblock.model.HomeFlag
 import ym.dreamSkyblock.text.MessageService
+import net.kyori.adventure.text.Component
+import net.kyori.adventure.text.format.TextDecoration
 import java.util.UUID
 
 /** Main thread only; renders immutable menu data, never performs IO or business mutations. */
@@ -79,10 +81,17 @@ class HomeMenuRenderer(private val messages: MessageService) {
     private fun item(section: ConfigurationSection, material: Material?, values: Map<String, String>): ItemStack {
         val item = ItemStack(material ?: Material.matchMaterial(section.getString("material")!!)!!)
         item.itemMeta = item.itemMeta.apply {
-            itemName(messages.componentRaw(section.getString("name")!!, values))
-            lore(messages.listRaw(section.getStringList("lore"), values))
+            itemName(itemText(section.getString("name")!!, values))
+            lore(section.getStringList("lore").map { itemText(it, values) })
             section.getString("custom-model-data")?.toIntOrNull()?.let(::setCustomModelData)
         }
         return item
     }
+
+    internal fun itemText(raw: String, values: Map<String, String> = emptyMap()): Component =
+        withoutItalic(messages.componentRaw(raw, values))
+
+    private fun withoutItalic(component: Component): Component = component
+        .decoration(TextDecoration.ITALIC, false)
+        .children(component.children().map(::withoutItalic))
 }

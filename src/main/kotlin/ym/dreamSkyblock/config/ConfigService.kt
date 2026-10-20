@@ -19,7 +19,8 @@ class ConfigService(private val plugin: DreamSkyblock) {
         val messages: YamlConfiguration,
         val menus: Map<HomeMenu, YamlConfiguration>,
         val levels: YamlConfiguration,
-        val arcMenus: YamlConfiguration
+        val arcMenus: YamlConfiguration,
+        val inveroMenus: InveroMenuConfig
     )
 
     lateinit var templates: Map<String, HomeTemplate>
@@ -42,10 +43,12 @@ class ConfigService(private val plugin: DreamSkyblock) {
         private set
     lateinit var arcMenus: YamlConfiguration
         private set
+    lateinit var inveroMenus: InveroMenuConfig
+        private set
 
     fun load() {
         plugin.saveDefaultConfig()
-        listOf("templates.yml", "retired_templates.yml", "lang/zh_cn.yml", "levels.yml", "arcmenus.yml").forEach {
+        listOf("templates.yml", "retired_templates.yml", "lang/zh_cn.yml", "levels.yml", "arcmenus.yml", "invero.yml").forEach {
             if (!File(plugin.dataFolder, it).exists()) plugin.saveResource(it, false)
         }
         apply(readSnapshot())
@@ -109,7 +112,8 @@ class ConfigService(private val plugin: DreamSkyblock) {
                         "arcmenus.yml: $key 无效: ${yaml.get(key)}"
                     }
                 }
-            }
+            },
+            InveroMenuConfig.read(VersionedYaml.load(File(plugin.dataFolder, "invero.yml").toPath()))
         )
     }
 
@@ -137,6 +141,7 @@ class ConfigService(private val plugin: DreamSkyblock) {
         menus = snapshot.menus
         levels = snapshot.levels
         arcMenus = snapshot.arcMenus
+        inveroMenus = snapshot.inveroMenus
     }
 
     private fun parseTemplate(id: String, root: YamlConfiguration): HomeTemplate? {

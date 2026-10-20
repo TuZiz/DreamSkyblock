@@ -9,18 +9,29 @@ import java.io.File
 
 /** Loads and validates one chest screen per resource. Disk access belongs to the configuration IO task. */
 class HomeGuiConfig(private val plugin: DreamSkyblock) {
-    fun load(): Map<HomeMenu, YamlConfiguration> = HomeMenu.entries.associateWith { menu ->
-        val file = "gui/${menu.file}.yml"
-        val path = File(plugin.dataFolder, file)
-        if (!path.exists()) plugin.saveResource(file, false)
-        VersionedYaml.load(path.toPath()).also { yaml ->
-            migrate(menu, yaml)
-            validate(file, yaml)
+    fun load(): Map<HomeMenu, YamlConfiguration> {
+        HomeSettingsMigration.migrate(plugin.dataFolder.toPath(), ::defaults)
+        return HomeMenu.entries.associateWith { menu ->
+            val file = "gui/${menu.file}.yml"
+            val path = File(plugin.dataFolder, file)
+            if (!path.exists()) plugin.saveResource(file, false)
+            VersionedYaml.load(path.toPath()).also { yaml ->
+                migrate(menu, yaml)
+                validate(file, yaml)
+            }
         }
     }
 
+    private fun defaults(menu: HomeMenu) = YamlConfiguration().apply {
+        loadFromString(plugin.getResource("gui/${menu.file}.yml")!!.bufferedReader(Charsets.UTF_8).use { it.readText() })
+    }
+
     private fun migrate(menu: HomeMenu, yaml: YamlConfiguration) {
-        val components = yaml.getConfigurationSection("components") ?: return
+        if (menu == HomeMenu.ISLAND) {
+            val defaults = defaults(menu)
+            migrateSpawn(yaml, defaults)
+            migrateWarehouse(yaml, defaults)
+        }
         if (menu == HomeMenu.MAIN) {
             val defaults = YamlConfiguration().apply {
                 loadFromString(plugin.getResource("gui/main.yml")!!.bufferedReader(Charsets.UTF_8).use { it.readText() })
@@ -33,45 +44,52 @@ class HomeGuiConfig(private val plugin: DreamSkyblock) {
             }
             migrateHelp(yaml, defaults)
         }
-        if (menu == HomeMenu.SETTINGS && yaml.getStringList("Shape").let { it.size == 6 && it[4] == "#vwxyzA #" && it[5] == "####C####" }) {
-            yaml.set("Shape", listOf("#########", "#abcdefg#", "#hijklmn#", "#opqrstu#", "#vwxyz  #", "####A####"))
-            yaml.set("components.C", null)
-        }
-        if (menu == HomeMenu.SETTINGS && yaml.contains("components.keep_inventory")) {
-            val symbol = yaml.getString("components.keep_inventory.symbol")
-            yaml.set("Shape", yaml.getStringList("Shape").map { if (symbol?.length == 1) it.replace(symbol[0], ' ') else it })
-            yaml.set("components.keep_inventory", null)
-        }
-        if (menu == HomeMenu.SETTINGS) {
-            val defaults = YamlConfiguration().apply {
-                loadFromString(plugin.getResource("gui/settings.yml")!!.bufferedReader(Charsets.UTF_8).use { it.readText() })
-            }
-            listOf("status.preview", "status.manage").forEach { path -> if (!yaml.contains(path)) yaml.set(path, defaults.get(path)) }
-            if (!yaml.contains("components.guide")) {
-                val shape = yaml.getStringList("Shape").toMutableList()
-                val row = shape.indices.reversed().firstOrNull { shape[it].contains(' ') }
-                if (row != null && shape.none { '?' in it }) {
-                    shape[row] = shape[row].replaceFirst(' ', '?')
-                    yaml.set("Shape", shape)
-                    yaml.createSection("components.guide", defaults.getConfigurationSection("components.guide")!!.getValues(false))
-                }
-            }
-        }
-        components.getKeys(false).toList().forEach { id ->
-            val path = "components.$id"
-            val action = yaml.getString("$path.action", "")!!
-            if (menu == HomeMenu.SETTINGS && id == "back" && action == "close") {
-                yaml.set("$path.action", "menu:main")
-            }
-        }
     }
 
     companion object {
+        /** Add the warehouse at row four, column eight without rewriting the user's file. */
+        internal fun migrateWarehouse(yaml: YamlConfiguration, defaults: YamlConfiguration) {
+            if (yaml.contains("components.warehouse")) return
+            val shape = yaml.getStringList("Shape").toMutableList()
+            require(shape.size >= 4 && shape[3].length == 9) { "gui/island.yml: Shape 第四行必须为 9 个字符，无法添加中央仓库" }
+            val used = yaml.getConfigurationSection("components")?.getKeys(false)
+                ?.mapNotNull { yaml.getString("components.$it.symbol")?.singleOrNull() }.orEmpty()
+            val symbol = "CABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".firstOrNull { it !in used }
+                ?: error("gui/island.yml: components.warehouse.symbol 没有可用字符")
+            defaults.getConfigurationSection("components.warehouse")!!.getValues(false).forEach { (key, value) ->
+                yaml.set("components.warehouse.$key", value)
+            }
+            yaml.set("components.warehouse.symbol", symbol.toString())
+            shape[3] = shape[3].substring(0, 7) + symbol + shape[3].substring(8)
+            yaml.set("Shape", shape)
+        }
+
+        /** Add the entry in memory; the user's file, comments and other slots remain intact. */
+        internal fun migrateSpawn(yaml: YamlConfiguration, defaults: YamlConfiguration) {
+            if (yaml.contains("components.spawn")) return
+            val shape = yaml.getStringList("Shape").toMutableList()
+            require(shape.isNotEmpty() && shape.first().length == 9) { "gui/island.yml: Shape 首行必须为 9 个字符" }
+            val used = yaml.getConfigurationSection("components")?.getKeys(false)
+                ?.mapNotNull { yaml.getString("components.$it.symbol")?.singleOrNull() }.orEmpty()
+            val symbol = ("WABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789").firstOrNull { it !in used }
+                ?: error("gui/island.yml: components.spawn.symbol 没有可用字符")
+            defaults.getConfigurationSection("components.spawn")!!.getValues(false).forEach { (key, value) ->
+                yaml.set("components.spawn.$key", value)
+            }
+            yaml.set("components.spawn.symbol", symbol.toString())
+            shape[0] = symbol + shape[0].substring(1)
+            yaml.set("Shape", shape)
+        }
+
         /** In-memory migration retains the original file and custom layout/style/unknown fields. */
         internal fun migrateHelp(yaml: YamlConfiguration, defaults: YamlConfiguration) {
             val oldActions = mapOf("menu:help_start" to "start", "menu:help_team" to "team",
                 "menu:settings" to "settings", "menu:help_levels" to "levels")
             val components = yaml.getConfigurationSection("components") ?: return
+            val lorePath = "components.start.lore"
+            yaml.set(lorePath, yaml.getStringList(lorePath).map {
+                it.replace("/回家", "/家").replace("/home <#67E8F9>· 呼出空岛星海主菜单", "/home gui 或 /家 菜单 <#67E8F9>· 打开空岛菜单")
+            })
             components.getKeys(false).forEach { id ->
                 val path = "components.$id"
                 val category = oldActions[yaml.getString("$path.action")] ?: return@forEach
@@ -102,7 +120,7 @@ class HomeGuiConfig(private val plugin: DreamSkyblock) {
         }
 
         private fun validAction(action: String): Boolean {
-            if (action in setOf("", "close", "create", "upgrade", "teleport", "previous", "next", "remove-member")) return true
+            if (action in setOf("", "close", "create", "upgrade", "teleport", "spawn", "warehouse", "holograms", "previous", "next", "remove-member")) return true
             val value = action.substringAfter(':', "")
             return when (action.substringBefore(':')) {
                 "menu" -> value == "main" || HomeMenu.entries.any { it.file == value }

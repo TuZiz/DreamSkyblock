@@ -31,6 +31,7 @@ public final class DreamGuiProbe extends JavaPlugin {
     private NoHomeReminder reminders;
     private Actor denied;
     private int reminderStageTick;
+    private CompletableFuture<Boolean> treeScheduled;
     static final UUID OWNER = UUID.fromString("00000000-0000-0000-0000-000000000077");
     static final UUID FRIEND = UUID.fromString("00000000-0000-0000-0000-000000000055");
     @Override public void onEnable() {
@@ -54,10 +55,12 @@ public final class DreamGuiProbe extends JavaPlugin {
             check(dream.getHomeManager().byPlayer(OWNER)==null,"vanilla direct creation rejected");
             gui.open(friend.player,new MenuRequest(HomeMenu.INVITES,0,null,null));
             check(friend.top.getItem(10)==null && friend.has("menu:main"),"no invites leaves blank content with back navigation");
-            gui.openMain(owner.player); check(owner.menu()==HomeMenu.MAIN,"main no-home");
+            command(owner, "家"); check(owner.menu()==HomeMenu.MAIN,"Chinese root opens creation without home");
+            check(getServer().getPluginCommand("is")==dream.getCommand("home") && getServer().getPluginCommand("dsb")==dream.getCommand("home"),"root aliases registered");
+            check(getServer().getPluginCommand("家")==dream.getCommand("home") && getServer().getPluginCommand("回家")==null,"new Chinese root replaces old alias");
             check(owner.has("menu:create_confirm") && owner.has("menu:invites") && !owner.has("teleport"),"guest buttons");
             check(!owner.has("menu:template_selection") && owner.actions().stream().filter("menu:create_confirm"::equals).count()==1,"legacy main has one direct creation entry");
-            check(dream.getConfigService().getMenus().size()==9,"preview menu is no longer loaded");
+            check(dream.getConfigService().getMenus().size()==11,"preview menu is no longer loaded");
             var mainYaml=dream.getConfigService().getMenus().get(HomeMenu.MAIN);
             check(mainYaml.getStringList("components.create.lore").stream().anyMatch(x->x.contains("<description>")) && mainYaml.getStringList("components.create.lore").stream().anyMatch(x->x.contains("<platform>")),"legacy main includes island introduction in Lore");
             ItemStack marker=new ItemStack(Material.DIAMOND);
@@ -79,21 +82,47 @@ public final class DreamGuiProbe extends JavaPlugin {
             check(dream.getHomeManager().byPlayer(OWNER)==null,"closed session ignores queued create");
             gui.openHelp(owner.player);checkHelp(owner);gui.openSettings(owner.player);phase=5;
         } else if(phase==5) {
-            check(owner.menu()==HomeMenu.SETTINGS,"settings explanation and toggles use one screen");
+            check(owner.menu()==HomeMenu.SETTINGS && owner.has("menu:world_rules") && owner.has("menu:visitor_permissions"),"separate setting category buttons");
+            owner.click("menu:world_rules");phase=51;
+        } else if(phase==51) {
+            check(owner.menu()==HomeMenu.WORLD_RULES && !owner.has("toggle:stranger_place"),"world rule screen isolated");
             owner.click("toggle:pvp");phase=6;
         } else if(phase==6) {
             check(dream.getHomeManager().byPlayer(OWNER)==null,"guest settings are read only");
             gui.openConfirm(owner.player,"skyblock");owner.click("create");phase=7;
         } else if(phase==7) {
             home=dream.getHomeManager().byPlayer(OWNER);if(home==null || !home.getStatus().equals("ACTIVE"))return;
-            gui.openMain(owner.player);check(owner.menu()==HomeMenu.ISLAND,"island main for member");
+            DreamTreeProbe.verify(dream, home);
+            treeScheduled=DreamTreeProbe.scheduled(dream,home);phase=71;
+        } else if(phase==71) {
+            if(!treeScheduled.isDone())return;
+            check(treeScheduled.getNow(false),"native automatic leaf ticks complete successfully");
+            command(owner,"is","菜单");check(owner.menu()==HomeMenu.ISLAND,"Chinese menu opens island screen");
+            check(dream.getCommand("home").tabComplete(owner.player,"家",new String[]{""}).contains("菜单"),"Chinese completions");
+            check(!dream.getCommand("home").tabComplete(owner.player,"家",new String[]{""}).contains("恢复"),"admin Chinese completions hidden");
             check(owner.has("teleport") && owner.has("upgrade") && owner.has("menu:members") && !owner.has("menu:create_confirm"),"island buttons");
             original=owner.top;owner.click("upgrade");phase=8;
         } else if(phase==8) {
             check(owner.top==original,"upgrade button opens no sub UI");
             owner.click("menu:settings");phase=9;
         } else if(phase==9) {
-            check(owner.menu()==HomeMenu.SETTINGS,"actual settings");
+            check(owner.menu()==HomeMenu.SETTINGS,"settings hub");
+            owner.click("menu:visitor_permissions");phase=91;
+        } else if(phase==91) {
+            check(owner.menu()==HomeMenu.VISITOR_PERMISSIONS && !owner.has("toggle:pvp"),"visitor screen isolated");
+            original=owner.top;settingsBefore=original.getContents();
+            settingsSlot=((HomeMenuHolder)original.getHolder()).getActions().entrySet().stream().filter(e->e.getValue().equals("toggle:stranger_place")).findFirst().orElseThrow().getKey();
+            owner.click("toggle:stranger_place");phase=92;
+        } else if(phase==92) {
+            if(!Boolean.TRUE.equals(home.getFlags().get(HomeFlag.STRANGER_PLACE)))return;
+            check(owner.top==original,"visitor toggle retains inventory");
+            for(int slot=0;slot<original.getSize();slot++)check(slot==settingsSlot ? !Objects.equals(settingsBefore[slot],original.getItem(slot)) : Objects.equals(settingsBefore[slot],original.getItem(slot)),"visitor toggle changes one slot="+slot);
+            owner.click("menu:settings");phase=93;
+        } else if(phase==93) {
+            check(owner.menu()==HomeMenu.SETTINGS,"visitor back to hub");
+            owner.click("menu:world_rules");phase=94;
+        } else if(phase==94) {
+            check(owner.menu()==HomeMenu.WORLD_RULES,"world rules");
             original=owner.top;settingsBefore=original.getContents();
             settingsSlot=((HomeMenuHolder)original.getHolder()).getActions().entrySet().stream().filter(e->e.getValue().equals("toggle:pvp")).findFirst().orElseThrow().getKey();
             owner.click("toggle:pvp");phase=10;
@@ -137,11 +166,11 @@ public final class DreamGuiProbe extends JavaPlugin {
         } else if(phase==19) {
             if(dream.getHomeManager().byPlayer(FRIEND)!=null)return;
             gui.openMain(friend.player);check(friend.has("menu:create_confirm"),"leave returns to guest main");
-            gui.openMain(owner.player);owner.click("teleport");phase=20;
+            command(owner,"家");phase=20;
         } else if(phase==20) {
             if(owner.teleports<2)return; // Teleport completion follows asynchronous chunk/world readiness.
             check(owner.teleports>=2,"return uses teleport service");
-            getLogger().info("DREAM GUI PROBE ALL PASS conditional main + direct creation/island Lore/no preview menu + create confirm/cancel/stale + drag/shift + single help categorized Lore/legacy migration + shared settings + invite accept + remove/leave + paging/blank empty lists + upgrade placeholder + return service");
+            getLogger().info("DREAM GUI PROBE ALL PASS conditional main + direct creation/island Lore/no preview menu + create confirm/cancel/stale + drag/shift + single help categorized Lore/legacy migration + split rule/visitor screens with single-slot updates + Chinese root/subcommands and direct /home teleport + invite accept + remove/leave + paging/blank empty lists + upgrade placeholder + return service");
             if(Boolean.getBoolean("dream.gui.partial")) {
                 gui.open(friend.player,new MenuRequest(HomeMenu.INVITES,0,null,null));
                 // Simulate a list shrinking between display and the scheduled click.
@@ -206,6 +235,9 @@ public final class DreamGuiProbe extends JavaPlugin {
             getLogger().info("DREAM GUI PARTIAL UPDATE ALL PASS setting single-slot commit + unchanged zero writes + page diff/clear/action remap + stale queued navigation + same inventory");
             getServer().shutdown();phase=99;
         }
+    }
+    private void command(Actor actor,String root,String... args) {
+        check(getServer().getPluginCommand(root).execute(actor.player,root,args),"command execution "+root);
     }
     private void checkHelp(Actor actor) {
         check(actor.menu()==HomeMenu.HELP,"single help screen");

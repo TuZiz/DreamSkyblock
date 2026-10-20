@@ -1,0 +1,131 @@
+schema-version: 1
+# 每个按钮提交后只更新变化的格子；随机刻与树叶凋零由插件内部维护。
+title: "<#74B9FF><b>空岛世界规则</b>"
+Shape:
+  - "########?"
+  - "#abcefg #"
+  - "#hijkl  #"
+  - "#       #"
+  - "####A####"
+status:
+  preview: "<#FBBF24>当前为说明预览，加入空岛后可修改"
+  manage: "<#34D399>点击设置按钮切换，提交成功后生效"
+  enabled: "<#1DD1A1>✔ 开启"
+  disabled: "<#FF6B6B>✖ 关闭"
+components:
+  border:
+    symbol: "#"
+    material: BLACK_STAINED_GLASS_PANE
+    name: "<#2D3436> "
+    lore:
+  pvp:
+    symbol: a
+    action: toggle:pvp
+    material: IRON_SWORD
+    name: "<#74B9FF><b>⚔ 玩家对战 (PVP)</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制家园内玩家之间是否能造成伤害"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  monster_spawn:
+    symbol: b
+    action: toggle:monster_spawn
+    material: ZOMBIE_HEAD
+    name: "<#74B9FF><b>🧟 怪物生成</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制家园内是否允许自然刷新敌对生物"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  animal_spawn:
+    symbol: c
+    action: toggle:animal_spawn
+    material: WHEAT
+    name: "<#74B9FF><b>🐄 动物生成</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制家园内是否允许自然刷新友善动物"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  flight:
+    symbol: e
+    action: toggle:flight
+    material: FEATHER
+    name: "<#74B9FF><b>🕊️ 允许飞行</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制家园内的玩家是否可以使用飞行能力"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  weather:
+    symbol: f
+    action: toggle:weather
+    material: SUNFLOWER
+    name: "<#74B9FF><b>🌦️ 天气循环</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制家园内的天气是否会自然变化"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  fire_spread:
+    symbol: g
+    action: toggle:fire_spread
+    material: FLINT_AND_STEEL
+    name: "<#74B9FF><b>🔥 火焰蔓延</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制家园内的火焰是否会燃烧并蔓延"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  tnt_explosion:
+    symbol: h
+    action: toggle:tnt_explosion
+    material: TNT
+    name: "<#74B9FF><b>💣 TNT 爆炸</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制爆炸物是否会破坏家园内的地形方块"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  entity_grief:
+    symbol: i
+    action: toggle:entity_grief
+    material: CREEPER_HEAD
+    name: "<#74B9FF><b>💥 生物破坏方块</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制苦力怕、末影人等生物是否能破坏方块"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  liquid_flow:
+    symbol: j
+    action: toggle:liquid_flow
+    material: WATER_BUCKET
+    name: "<#74B9FF><b>🌊 液体流动</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制家园内的水和岩浆是否能够自然流动"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  portal_nether:
+    symbol: k
+    action: toggle:portal_nether
+    material: OBSIDIAN
+    name: "<#74B9FF><b>🌋 地狱传送门</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制家园内是否允许激活地狱传送门"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  portal_end:
+    symbol: l
+    action: toggle:portal_end
+    material: END_PORTAL_FRAME
+    name: "<#74B9FF><b>🌌 末地传送门</b> <#A1B2C3>| <status>"
+    lore:
+      - "<#C8D6E5>▪ 控制家园内是否允许激活末地传送门"
+      - ""
+      - "<#FDCB6E>▶ 点击即可切换状态"
+  back:
+    symbol: A
+    action: menu:settings
+    material: ARROW
+    name: "<#FF6B6B>返回空岛设置"
+    lore:
+  guide:
+    symbol: "?"
+    material: BOOK
+    name: "<#FBBF24>设置说明"
+    lore:
+      - "<settings_access>"
