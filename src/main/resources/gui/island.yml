@@ -70,7 +70,7 @@ components:
   settings:
     symbol: "S"
     material: "COMPARATOR"
-    name: "<gradient:#00F2FE:#4FACFE><b>⚙️ 空岛设置</b></gradient>"
+    name: '<gradient:#00F2FE:#4FACFE><b>空岛设置</b></gradient>'
     lore:
       - "<#67E8F9>  管理世界规则与访客互动权限"
       - ""
