@@ -13,9 +13,13 @@ import ym.dreamSkyblock.config.ConfigService
 import ym.dreamSkyblock.gui.HomeGuiManager
 import ym.dreamSkyblock.listener.HomeOccupancyListener
 import ym.dreamSkyblock.listener.HomeProtectionListener
+import ym.dreamSkyblock.listener.HomeHungerListener
 import ym.dreamSkyblock.placeholder.DreamSkyblockExpansion
 import ym.dreamSkyblock.reminder.NoHomeReminder
 import ym.dreamSkyblock.login.HomeLoginReturn
+import ym.dreamSkyblock.login.HomeSpawnService
+import ym.dreamSkyblock.login.HomeInitialSpawn
+import ym.dreamSkyblock.login.HomeRespawn
 import ym.dreamSkyblock.service.HomeManager
 import ym.dreamSkyblock.service.HomeLevelService
 import ym.dreamSkyblock.storage.HomeMaintenanceService
@@ -44,6 +48,9 @@ class DreamSkyblock : JavaPlugin() {
     private var gui: HomeGuiManager? = null
     private var reminders: NoHomeReminder? = null
     private var loginReturn: HomeLoginReturn? = null
+    private var spawnService: HomeSpawnService? = null
+    private var initialSpawn: HomeInitialSpawn? = null
+    private var homeRespawn: HomeRespawn? = null
     private var borderDisplay: HomeBorderDisplay? = null
     private var values: HomeValueService? = null
     private val ioExecutor = Executors.newFixedThreadPool(2) { runnable -> Thread(runnable, "DreamSkyblock-IO").apply { isDaemon = false } }
@@ -86,10 +93,14 @@ class DreamSkyblock : JavaPlugin() {
         val command = HomeCommand(this, configService, homeManager, gui, messages)
         getCommand("home")?.apply { setExecutor(command); setTabCompleter(command) }
         server.pluginManager.registerEvents(HomeProtectionListener(homeManager, worldManager), this)
+        server.pluginManager.registerEvents(HomeHungerListener(worldManager::isHomeWorld), this)
         server.pluginManager.registerEvents(HomeOccupancyListener(homeManager, worldManager, configService), this)
         val loginReturn = HomeLoginReturn(this, homeManager, worldManager).also { this.loginReturn = it }
         server.pluginManager.registerEvents(loginReturn, this)
         loginReturn.start()
+        val spawns = HomeSpawnService(this, homeManager, worldManager).also { spawnService = it }
+        HomeInitialSpawn(this, spawns).also { initialSpawn = it; server.pluginManager.registerEvents(it, this) }
+        HomeRespawn(this, homeManager, worldManager, spawns).also { homeRespawn = it; server.pluginManager.registerEvents(it, this) }
         val borderDisplay = HomeBorderDisplay(this, homeManager, worldManager).also { this.borderDisplay = it }
         server.pluginManager.registerEvents(borderDisplay, this)
         borderDisplay.start()
@@ -116,6 +127,9 @@ class DreamSkyblock : JavaPlugin() {
     override fun onDisable() {
         stopping = true
         databaseBackups?.stop(); databaseBackups = null
+        initialSpawn?.stop(); initialSpawn = null
+        homeRespawn?.stop(); homeRespawn = null
+        spawnService?.stop(); spawnService = null
         loginReturn?.stop(); loginReturn = null
         values?.stop(); values = null
         reminders?.stop(); reminders = null

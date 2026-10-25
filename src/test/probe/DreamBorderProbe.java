@@ -9,6 +9,7 @@ import ym.dreamSkyblock.model.Home;
 import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import com.destroystokyo.paper.event.player.PlayerPostRespawnEvent;
 
 /** Synthetic player transport; real Leaf worlds, native borders, scheduler, creation and DB. */
 public final class DreamBorderProbe extends JavaPlugin {
@@ -18,6 +19,8 @@ public final class DreamBorderProbe extends JavaPlugin {
     private Home home;
     private World island;
     private int phase, ticks;
+    private int beforeResync, beforeExternal;
+    private WorldBorder cached, external;
     private static final UUID OWNER=UUID.fromString("00000000-0000-0000-0000-000000000088");
     @Override public void onEnable() {
         getServer().getGlobalRegionScheduler().runAtFixedRate(this,t->{
@@ -49,6 +52,9 @@ public final class DreamBorderProbe extends JavaPlugin {
             check(updates==owner.borderUpdates,"no repeated border packets when unchanged");
             owner.border=null;display.update(owner.player);
             check(owner.border!=null && owner.border.getSize()>1000000,"cleared override is reapplied after respawn");
+            cached=owner.border;beforeResync=owner.borderUpdates;
+            display.respawn(new PlayerPostRespawnEvent(owner.player,owner.location,false,false,false,PlayerRespawnEvent.RespawnReason.DEATH));
+            display.teleport(new PlayerTeleportEvent(owner.player,owner.location,owner.location.clone()));
             owner.location.setX(22);display.update(owner.player);
             check(owner.particles==27 && owner.points.stream().allMatch(p->p[0]==24.0),"localized dust on actual east edge");
             check(island.getWorldBorder().isInside(new Location(island,23,101,0)) && !island.getWorldBorder().isInside(new Location(island,25,101,0)),"native bounds unaffected by visual override");
@@ -64,23 +70,29 @@ public final class DreamBorderProbe extends JavaPlugin {
             home.setLevel(2);home.setBorderSize(dream.getLevelService().borderSizeFor(2));dream.getWorldManager().applyFlags(home);phase=2;
         } else if(phase==2) {
             if(island.getWorldBorder().getSize()!=64.0)return;
+            check(owner.border==cached && owner.borderUpdates>beforeResync,"cached hidden override is resent after lifecycle reset without getter becoming null");
             owner.particles=0;owner.points.clear();display.update(owner.player);
             check(owner.particles==0,"old 24 edge no longer highlighted after expansion");
             owner.location.setX(30);display.update(owner.player);
             check(owner.particles==27 && owner.points.stream().allMatch(p->p[0]==32.0),"level2 outline follows 64 block native edge");
             check(island.getWorldBorder().getSize()==64.0 && owner.border.getSize()>1000000,"server upgrade and client hidden border independent");
-            var external=getServer().createWorldBorder();owner.border=external;
+            external=getServer().createWorldBorder();owner.border=external;
             owner.world=getServer().getWorlds().getFirst();owner.location=new Location(owner.world,0,100,0);
             display.changed(new PlayerChangedWorldEvent(owner.player,island));check(owner.border==external,"do not overwrite a newer override owned elsewhere");
             owner.border=null;owner.world=island;owner.location=new Location(island,0,101,0);
             display.changed(new PlayerChangedWorldEvent(owner.player,getServer().getWorlds().getFirst()));
             check(owner.border!=null,"reenter reapplies hidden border");
+            owner.border=external;beforeExternal=owner.borderUpdates;
+            display.respawn(new PlayerPostRespawnEvent(owner.player,owner.location,false,false,false,PlayerRespawnEvent.RespawnReason.DEATH));
+            phase=3;
+        } else if(phase==3) {
+            check(owner.border==external && owner.borderUpdates==beforeExternal,"deferred resync respects a newer external plugin border");
             display.quit(new PlayerQuitEvent(owner.player,net.kyori.adventure.text.Component.empty(),PlayerQuitEvent.QuitReason.DISCONNECTED));
             var field=HomeBorderDisplay.class.getDeclaredField("views");field.setAccessible(true);
             check(((Map<?,?>)field.get(display)).isEmpty(),"quit removes sessions");
             display.stop();display.stop();
             var task=HomeBorderDisplay.class.getDeclaredField("task");task.setAccessible(true);check(task.get(display)==null,"stop releases owned task");
-            getLogger().info("DREAM BORDER ALL PASS default48 + native bounds + client-only hidden border + near-only particles + visitor + expansion + enter/leave/prior-border restore + override ownership + quit/stop");
+            getLogger().info("DREAM BORDER ALL PASS default48 + native bounds + client-only hidden border + particles + visitor + expansion + cached respawn/teleport resync + external override ownership + enter/leave + quit/stop");
             getServer().shutdown();phase=99;
         }
     }

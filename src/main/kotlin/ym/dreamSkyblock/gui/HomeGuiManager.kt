@@ -64,8 +64,8 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
         if (request.menu == HomeMenu.MAIN && home != null) { openMain(player); return }
         if (request.menu in setOf(HomeMenu.MAIN, HomeMenu.ISLAND)) {
             if (config.inveroMenus.enabled) {
-                if (invero.open(player, request.menu, data.values(player, home, request))) return
-            } else if (arc?.open(player, request.menu) == true) return
+                if (invero.open(player, request.menu, data.values(player, home, request))) { tutorialOpened(player,request); return }
+            } else if (arc?.open(player, request.menu) == true) { tutorialOpened(player,request); return }
         }
         arc?.close(player)
         val yaml = config.menus.getValue(request.menu)
@@ -78,6 +78,16 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
         val inventory = renderer.render(player, home?.id, request, yaml, data.values(player, home, request),
             data.entries(player, home, request.menu), home?.flags?.toMap() ?: emptyMap())
         player.openInventory(inventory)
+        tutorialOpened(player,request)
+    }
+
+    private fun tutorialOpened(player: Player, request: MenuRequest) {
+        if(request.menu != HomeMenu.ISLAND) return
+        plugin.server.scheduler.runTask(plugin,Runnable {
+            if(!plugin.isEnabled || !player.isOnline || !viewing(player)) return@Runnable
+            val home=homes.byPlayer(player.uniqueId) ?: return@Runnable
+            plugin.server.pluginManager.callEvent(ym.dreamSkyblock.api.HomeMenuOpenedEvent(home.id,player.uniqueId,request.menu.name))
+        })
     }
 
     fun click(event: InventoryClickEvent) {

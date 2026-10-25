@@ -28,6 +28,7 @@ class HomeWorldManager(
     private val records = ConcurrentHashMap<UUID, Home>()
     private val pendingUnload = ConcurrentHashMap<UUID, ScheduledTask>()
     private val maintenance = ConcurrentHashMap.newKeySet<UUID>()
+    private val spawnHolds = mutableMapOf<UUID, Int>()
     private val operations = HomeOperationQueue()
     private val tasks = PaperWorldTasks(plugin)
     @Volatile private var stopped = false
@@ -41,6 +42,30 @@ class HomeWorldManager(
 
     fun create(home: Home, template: HomeTemplate, player: Player, done: (Boolean) -> Unit) = visit(home, template, player, true, done)
     fun load(home: Home, template: HomeTemplate, player: Player?, done: (Boolean) -> Unit) = visit(home, template, player, false, done)
+
+    /** Main-thread reservation. Configuration/respawn callers release after placement or disconnect. */
+    fun holdSpawn(home: Home): () -> Unit {
+        cancelUnload(home)
+        spawnHolds[home.id] = (spawnHolds[home.id] ?: 0) + 1
+        var released = false
+        return release@{
+            if (released) return@release
+            released = true
+            val count = (spawnHolds[home.id] ?: 1) - 1
+            if (count <= 0) spawnHolds.remove(home.id) else spawnHolds[home.id] = count
+            if (!stopped && loaded[home.id]?.players?.isEmpty() == true) scheduleUnload(home, config.unloadDelaySeconds)
+        }
+    }
+
+    /** Main-thread entry; uses the same world lifecycle queue, never regenerates absent archives. */
+    fun prepareSpawn(home: Home, template: HomeTemplate): CompletableFuture<Location> = operations.submit(home.id) {
+        if (stopped || isBusy(home) || home.status != "ACTIVE") {
+            CompletableFuture.failedFuture(IllegalStateException("家园不可用于出生: ${home.id}, status=${home.status}"))
+        } else open(home, template, false).thenCompose { world -> tasks.global {
+            val point = home.spawn ?: template.spawn
+            Location(world, point.x, point.y, point.z, point.yaw, point.pitch)
+        } }
+    }
 
     /** 主线程入口/门禁；加载可以继续完成，但失效登录会话不得触发迟到传送。 */
     fun loadForLogin(home: Home, template: HomeTemplate, player: Player, current: () -> Boolean, done: (Boolean) -> Unit) =
@@ -168,6 +193,7 @@ class HomeWorldManager(
 
     /** 主线程；false 时仍保留加载记录及原生存档供重试。 */
     private fun unloadEmpty(home: Home): Boolean {
+        if ((spawnHolds[home.id] ?: 0) > 0) return false
         val world = loaded[home.id] ?: plugin.server.getWorld(key(home)) ?: return true
         if (world.players.isNotEmpty()) return false
         // Paper 的 save=true 已负责保存并关闭存档；不要在它之前再完整 flush 一次。

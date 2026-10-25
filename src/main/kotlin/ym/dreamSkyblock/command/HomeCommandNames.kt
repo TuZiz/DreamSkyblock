@@ -7,6 +7,7 @@ internal object HomeCommandNames {
     val chinese = linkedMapOf(
         "菜单" to "gui", "创建" to "create", "传送" to "tp", "邀请" to "invite",
         "接受" to "accept", "拒绝" to "deny", "退出" to "leave", "删除" to "delete",
+        "成员" to "members", "邀请列表" to "invites", "规则" to "rules", "访客权限" to "permissions",
         "设置" to "settings", "帮助" to "help", "重载" to "reload", "备份" to "backup",
         "恢复" to "restore", "迁移" to "migrate"
     )

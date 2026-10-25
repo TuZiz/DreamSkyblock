@@ -138,6 +138,7 @@ class HomeManager(
                             home.status = "RECOVERY"
                             plugin.logger.log(Level.SEVERE, "家园创建提交失败 home_id=${home.id}；保留存档", statusError)
                         }
+                        if (ok && statusError == null) plugin.server.pluginManager.callEvent(ym.dreamSkyblock.api.HomeMembershipCommittedEvent(home.id, player.uniqueId))
                         if (player.isOnline) messages.send(player, if (ok && statusError == null) "home.created" else "home.create-failed", mapOf("template" to template.displayName))
                     }
                 }
@@ -185,6 +186,7 @@ class HomeManager(
             it.owners.add(player.uniqueId); it.ownerNames[player.uniqueId] = player.name
         }).whenComplete { _, error -> tasks.global {
             playerLocks.remove(player.uniqueId)
+            if (error == null) plugin.server.pluginManager.callEvent(ym.dreamSkyblock.api.HomeMembershipCommittedEvent(home.id, player.uniqueId))
             done(error == null)
         } }
     }

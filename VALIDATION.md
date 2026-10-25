@@ -268,3 +268,43 @@ Neuron check_c5216988be79493db67b 通过，报告 target/verification/neuron/bor
 - `target/verification/neuron/ownership-recovery-check.json` 本地检查通过，无 issues/pending；无 GUI、权限、玩家文本或菜单渲染变更。Neuron task `task_1c5ff6246ef74ab9a60e` 远程结果引用最终提交证据。
 - 正式 JAR 14,287,256 字节，未包含 Bukkit/Paper API、JUnit、测试写入器、探针或源码；已覆盖默认 `C:/Users/32633/Desktop/leaf/plugins/DreamSkyblock-1.0-SNAPSHOT.jar`，源/目标 SHA-256 均为 `19D662EFAF46EDB382C11074DEA103A888A81F6E6DA41D4290A781B8E9067D20`。没有重启/重载生产服务器；旧 GUI 探针已恢复，中间 JAR 已归档。
 - 范围限制：没有模拟操作系统断电、整台 Leaf 在脏区块写入中被杀、真实在线玩家停止分支或等待完整 15 分钟定时周期；强制退出实测针对独立 JVM 的 SQLite/WAL 提交边界，原生存档关联恢复采用两次隔离启动验收。用户原有 `401673ef-f628-45bd-88f0-845d7f9e568e` 世界缺少可信归属证据，仍保留原目录；新版本正常启动会列入待处理清单，不能根据目录名擅自绑定给当前玩家。
+
+## 2026-10-23 Invero 主菜单部署
+
+- 两份主页保存在 integrations/invero，并同步至指定 workspace；服务器原配置已备份至 Invero/backups/dreamskyblock-20261023125742。
+- Invero 1.4.17 安装 JAR：PatchedLoader YAML→JSON、图标动作反序列化、28 段 Kether 解析及桥接方法签名通过。日志 target/verification/logs/invero-main-runtime.log。
+- Maven package 成功，HomeMenuConfigTest / InveroMenuConfigTest / HomeCommandNamesTest 共 14 项通过。日志 target/verification/logs/invero-main-build.log。
+- 未执行完整 BaseMenu 打开、客户端非斜体和真实玩家点击验证；未自动重启或重载。
+
+### 同日最终需求修正：独立 Invero 副本
+
+用户最终要求内置有岛和无岛主页均保留，仅额外提供独立有岛 Invero 菜单；前述两主页接管方案已撤回。主菜单路由、Invero 配置与桥接恢复原实现，服务器接管配置关闭。不添加专用打开命令。外部显示改为现有 PAPI，移除会话上下文依赖；外部无岛菜单已移出 workspace 并备份。
+
+最终检查：单菜单布局校验、安装 Invero 1.4.17 实际 YAML→JSON、9 个动作反序列化及 Kether 解析通过（invero-standalone-runtime.log）；Maven 14 项测试通过（invero-standalone-build.log）。没有执行游戏客户端打开/点击、PAPI 实时值与字体样式验收。
+
+## Quest 事件兼容更新（2026-10-23）
+
+正式服JAR缺少 HomeMembershipCommittedEvent 和 HomeMenuOpenedEvent。将原Quest兼容构建中的两事件及成功提交/菜单打开调用点合入当前源码，保留已有命令修改。Java25执行 mvn -o package -Dkotlin.compiler.daemon=false：81项测试，0失败、0错误、1跳过；随后使用 -Dpaper.version=26.3.build.28-alpha -DskipTests 完成正式服版本构建。独立Java25链接探针对最终JAR两事件构造/HandlerList及现用Quest DreamSkyblockBridge方法发现通过；日志 target/verification/logs/quest-event-link.log。JAR已审计无Bukkit/Paper API及探针，部署SHA校验通过；原JAR保留在服务器DreamSkyblock/backups/quest-api-compat-*。部署详情 target/verification/diagnostics/quest-api-deployment.json。正式服未重启，实际事件注册和玩家流程需重启后验收；未改配置或数据库。
+
+## 2026-10-23 家园世界默认不掉饥饿
+
+- 新增独立 HomeHungerListener，通过 HomeWorldManager.isHomeWorld 确认归属世界；Paper 主线程监听 EntityExhaustionEvent 与 FoodLevelChangeEvent，阻止玩家耗竭和食物值下降，允许食物值增加。成员与访客一致生效，不改难度或自然回血规则。
+- 当前 paper-api 26.2.build.126-stable 的事件签名已用 javap 核查。HomeHungerListenerTest 两项通过，覆盖家园保护、吃东西、其他世界耗竭及饥饿不变；Maven package 成功。日志 target/verification/logs/home-hunger-build.log。
+- 未执行真实客户端跑动、跳跃、自然回血与饥饿药效验收。其他插件直接 setFoodLevel 不经过事件的写入不在此事件保护范围。
+
+## 2026-10-24 登录出生与家园重生
+
+- 从当前 paper-api 26.2.build.126-stable sources/JAR 验证 AsyncPlayerSpawnLocationEvent、配置连接和重生事件；只在异步配置事件线程限时等待，世界API、归属检查与预约释放在主线程。磁盘检查仍使用原世界队列与IO线程，无存档复制/重生成。
+- HomeInitialSpawn 负责配置阶段初始出生选择；HomeSpawnService 负责加载与预约；HomeRespawn 负责死亡预加载/默认重生/快速重生回岛，玩家断线、主动传送及停用清理会话。两个内置主页及独立 Invero 副本未改。
+- Maven package 成功；HomeOperationQueueTest + HomeHungerListenerTest 共4项通过。日志 target/verification/logs/home-spawn-final-build.log。
+- 隔离 Leaf 26.2 build124 真实世界、SQLite和调度器探针：DREAM HOME SPAWN ALL PASS。覆盖未加载岛屿初始出生直接选岛、不经过玩家teleport、配置期间阻止空世界卸载、即时重生加载回岛、已加载岛屿直接重生、有效床保留、断线取消迟到传送。玩家/配置连接为代理，不是实际客户端网络登录。日志 target/verification/logs/home-spawn-leaf-final.log。
+- 首轮探针反射读取入口字段需要完整类型解析，隔离服未安装可选PAPI导致失败；只为探针补入已有PAPI后继续。第二轮探针被原60秒卸载任务覆盖短计时并超时phase5，调整探针取消原计时且等待预约释放后重设，最终通过。未通过轮次日志保留；无需为此改变生产卸载语义。
+- 未验证实际网络客户端画面、多插件更晚覆盖出生位置、配置阶段30秒超时、主世界全局出生点地形安全。有效家园玩家登录现在默认直接家园，含此前在其他世界退出的玩家。快速重生且家园未加载时仍先使用服务器重生流程，随后异步回岛；不把此路径声称为零过渡。
+- 隔离服正常关闭、原测试插件JAR已恢复；未重启/重载生产服务器。已有Windows OSHI计数器诊断和模板/等级迁移警告不归因于此改动；测试新岛首次保存警告沿用既有机制。
+
+## 2026-10-24 透明边界生命周期重同步
+
+- HomeBorderDisplay 在登录、换世界、传送、重生以及真实世界边界大小/中心变化后，合并同玩家待执行任务，下一 tick 重发本插件拥有的隐藏个人边界。补上服务端仍缓存隐藏边界、客户端却被原生世界初始化边界包覆盖时的遗漏；不改真实边界尺寸和粒子算法，不持续强制发包，不覆盖其他插件后来设置的边界。退出和停用取消待重发任务。
+- 本地 Paper 26.2 build126 API 与 Leaf 26.2 build124 字节码已检查：CraftPlayer 个人边界 getter 返回缓存，setter 可重发同一对象；PlayerList 世界初始化存在发送真实世界边界的路径。证据 target/verification/api/craftplayer-border-bytecode.txt、playerlist-border-bytecode.txt。
+- Maven package 成功，HomeBorderOutlineTest 4项通过；日志 target/verification/logs/border-resync-build.log。隔离 Leaf 探针 DREAM BORDER ALL PASS，覆盖非空缓存边界在重生/传送后重新发送、48真实边界、64升级后的粒子范围、访客、其他插件边界所有权、进出世界和退出/停止清理；日志 target/verification/logs/border-resync-leaf.log。测试使用代理玩家和真实 Leaf 世界/调度器，未验证实际网络客户端画面。
+- 最终 JAR 已检查不含服务端 API 和测试探针，并同名覆盖指定 plugins 目录，SHA-256 一致；部署详情 target/verification/diagnostics/border-resync-deployment.json。原生产 JAR 已备份，隔离服原插件 JAR 已恢复；未重启/重载生产服。已有 Shade 重叠资源、测试服 OSHI 环境诊断不属于本次新增问题。

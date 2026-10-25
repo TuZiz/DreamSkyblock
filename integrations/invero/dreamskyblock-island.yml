@@ -1,0 +1,126 @@
+# 独立 Invero 菜单；PAPI 提供显示数据，按钮调用既有功能，无专用打开指令。
+schema-version: 1
+title: '<gradient:#00F2FE:#4FACFE:#FFD700><b>✦ 我的空岛 ✦</b></gradient>'
+rows: 5
+layout:
+  - 'W###I###H'
+  - '# M S U #'
+  - '#   T   #'
+  - '#G     C#'
+  - '+###X###+'
+items:
+  'C':
+    material: 'CHEST'
+    name: '<gradient:#F6D365:#FDA085><b>中央仓库</b></gradient>'
+    lore:
+      - '<#67E8F9>打开当前空岛的中央仓库'
+      - '<#5EEAD4>本岛成员共享仓库资源'
+      - ''
+      - '<#FFD700>▸ 点击打开中央仓库'
+    action:
+      left: |-
+        playerPerform "dreamskyblock:home menu-action warehouse"
+        true
+  'W':
+    material: 'COMPASS'
+    name: '<gradient:#00F2FE:#4FACFE><b>返回主城</b></gradient>'
+    lore:
+      - '<#67E8F9>传送到 world 世界当前的出生点'
+      - '<#FFD700>▸ 点击立即传送'
+    action:
+      left: |-
+        playerPerform "dreamskyblock:home menu-action spawn"
+        true
+  '#':
+    material: 'CYAN_STAINED_GLASS_PANE'
+    name: '<#00F2FE>✦'
+  '+':
+    material: 'YELLOW_STAINED_GLASS_PANE'
+    name: '<#FFD700>❖'
+  'I':
+    material: 'GRASS_BLOCK'
+    name: '<gradient:#00FF87:#60EFFF><b>🌱 我的空岛信息</b></gradient>'
+    lore:
+      - '<#2DD4BF>  ∟ 初始主人：<#FFD700><b>%dreamskyblock_owner_name%</b>'
+      - '<#2DD4BF>  ∟ 空岛等级：<#00FF87><b>%dreamskyblock_level%</b>'
+      - '<#2DD4BF>  ∟ 建造边界：<#00F2FE><b>%dreamskyblock_border% × %dreamskyblock_border%</b>'
+      - '<#2DD4BF>  ∟ 共同成员：<#00FF87><b>%dreamskyblock_member_count%</b> <#67E8F9>/ <#FFD700><b>%dreamskyblock_member_limit%</b>'
+  'M':
+    material: 'PLAYER_HEAD'
+    name: '<gradient:#FF9A9E:#FECFEF><b>🤝 成员管理</b></gradient>'
+    lore:
+      - '<#67E8F9>  查看成员、邀请在线好友与退出团队'
+      - '<#5EEAD4>  共同主人拥有相同的管理权限'
+      - ''
+      - '<#FFD700>▸ <b>点击打开成员管理</b>'
+    action:
+      left: |-
+        playerPerform "dreamskyblock:home members"
+        true
+  'S':
+    material: 'COMPARATOR'
+    name: '<gradient:#00F2FE:#4FACFE><b>空岛设置</b></gradient>'
+    lore:
+      - '<#67E8F9>  管理世界规则与访客互动权限'
+      - ''
+      - '<#00F2FE>▸ <b>点击打开空岛设置</b>'
+    action:
+      left: |-
+        playerPerform "dreamskyblock:home settings"
+        true
+  'H':
+    material: 'KNOWLEDGE_BOOK'
+    name: '<gradient:#F6D365:#FDA085><b>📖 帮助中心</b></gradient>'
+    lore:
+      - '<#67E8F9>  按分类了解空岛各项功能说明'
+      - ''
+      - '<#FFD700>▸ <b>点击查看帮助</b>'
+    action:
+      left: |-
+        playerPerform "dreamskyblock:home help"
+        true
+  'U':
+    material: 'EXPERIENCE_BOTTLE'
+    name: '<gradient:#F6D365:#FDA085><b>✨ 空岛升级信息</b></gradient>'
+    lore:
+      - '<#2DD4BF>  ∟ 当前等级：<#FFD700><b>%dreamskyblock_level%</b>'
+      - '<#2DD4BF>  ∟ 当前空岛价值：<#00FF87><b>%dreamskyblock_value%</b>'
+      - '<#2DD4BF>  ∟ 下一等级价值门槛：<#00F2FE><b>%dreamskyblock_next_value_threshold%</b>'
+      - '<#2DD4BF>  ∟ 距离下一等级还差：<#FFD700><b>%dreamskyblock_remaining_value%</b>'
+      - '<#2DD4BF>  ∟ 最高建造边界：<#00FF87><b>384 × 384</b>'
+      - ''
+      - '<#FBBF24>  * 设施价值决定等级，拆除可降级，已解锁边界保留'
+    action:
+      left: |-
+        playerPerform "dreamskyblock:home menu-action upgrade"
+        true
+  'T':
+    material: 'ENDER_PEARL'
+    name: '<gradient:#00FF87:#60EFFF><b>🏡 回到空岛</b></gradient>'
+    lore:
+      - '<#67E8F9>  传送到空岛的家园传送点'
+      - ''
+      - '<#FFD700>▸ <b>点击立即传送</b>'
+    action:
+      left: |-
+        playerPerform "dreamskyblock:home menu-action teleport"
+        true
+  'G':
+    material: 'NAME_TAG'
+    name: '<#67E8F9>全息字开关'
+    lore:
+      - '<#CBD5E1>点击开启或关闭本岛生成器全息字'
+      - '<#94A3B8>共同主人共享设置，不影响生成器生产'
+    action:
+      left: |-
+        playerPerform "genlite:genlite holograms menu"
+        true
+  'X':
+    material: 'BARRIER'
+    name: '<gradient:#FF416C:#FF4B2B><b>✖ 关闭菜单</b></gradient>'
+    lore:
+      - '<#FBBF24>▸ 点击关闭当前界面'
+    action:
+      left: |-
+        menu close
+        true
