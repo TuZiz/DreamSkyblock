@@ -1,0 +1,6 @@
+schema-version: 1
+name: 'DreamSkyblock 菜单资源'
+author: 'DreamSkyblock'
+version: '1.0.0'
+description: '空岛创建、创建确认与 Invero 菜单像素皮肤'
+namespace: dreamskyblock

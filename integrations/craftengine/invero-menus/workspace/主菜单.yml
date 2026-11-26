@@ -1,0 +1,90 @@
+# V5 像素皮肤：176×108；透明纸张保留原按钮提示与动作。
+# ==========================================
+#          服务器主菜单 (Invero 配置)
+#   统一全服金/冰蓝视觉色系，移除斜体冗余标签
+# ==========================================
+schema-version: 1
+
+# 标题：使用 Invero 原生 RGB 色码，与快捷菜单物品呼应的暖金渐变
+title: '<#FFFFFF><font:dreamskyblock_menus:space></font><font:dreamskyblock_menus:menus></font>'
+
+'bindings':
+  'command':
+    - 'servermenu'
+    - '菜单'
+    - 'cd'
+
+layout:
+  - ' QPPPPP G'
+  - '  IIIII  '
+  - '  IIIII  '
+  - '  KKKKK  '
+  - '         '
+
+'items':
+  '#':
+    'material': 'GRAY_STAINED_GLASS_PANE'
+    'name': '<#34474F> '
+
+  'I':
+    material: 'PAPER'
+    item_model: 'dreamskyblock_menus:hitbox'
+    'name': '<#A8FF78>✦ <#78FFD6><bold>个人家园</bold>'
+    'lore':
+      - ''
+      - ' <#89F7FE>▪ <#C2E9FB>返回你的专属空岛或创建新家园'
+      - ' <#89F7FE>▪ <#C2E9FB>管理领地权限、成员与生产机器'
+      - ''
+      - ' <#FFDF00>▶ <#FFF9C4>[点击] <#E0F7FA>返回家园 / 创建空岛'
+    'action':
+      'default': |-
+        menu close
+        command "dreamskyblock:home"
+        true
+  'Q':
+    material: 'PAPER'
+    item_model: 'dreamskyblock_menus:hitbox'
+    name: '<gradient:#F6D365:#FDA085><b>任务中心</b></gradient>'
+    lore:
+      - '<#67E8F9>查看任务与任务进度'
+      - ''
+      - '<#FFD700>▸ 点击打开任务中心'
+    action:
+      left: |-
+        menu close
+        playerPerform "quest"
+        true
+  'K':
+    material: 'PAPER'
+    item_model: 'dreamskyblock_menus:hitbox'
+    name: '<gradient:#00FF87:#60EFFF><b>玩家市场</b></gradient>'
+    lore:
+      - '<#67E8F9>打开市场界面'
+      - ''
+      - '<#FFD700>▸ 点击打开玩家市场'
+    action:
+      left: |-
+        menu close
+        playerPerform "market"
+        true
+  'P':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<#CDE7AF>传送'
+    'lore':
+      - '<#B7C9A7>打开传送菜单'
+    'action':
+      'left': 'menu open "传送"
+
+        true'
+  'G':
+    material: 'PAPER'
+    item_model: 'dreamskyblock_menus:hitbox'
+    name: '<#D7E7C1>游戏设置'
+    lore:
+      - '<#B7C9A7>调整画面显示与通知偏好。'
+    action:
+      left: |-
+        menu open "游戏设置"
+        true
+'rows': 5

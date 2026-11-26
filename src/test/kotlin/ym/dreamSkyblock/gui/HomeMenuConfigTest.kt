@@ -12,6 +12,31 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 class HomeMenuConfigTest {
+    @Test fun `pixel skins keep actions on their vanilla slot rectangles`() {
+        val root = Path.of("integrations/craftengine/island-creation/gui")
+        val main = YamlConfiguration().apply { loadFromString(Files.readString(root.resolve("main.yml"))) }
+        val confirm = YamlConfiguration().apply { loadFromString(Files.readString(root.resolve("create_confirm.yml"))) }
+        listOf(main, confirm).forEach { yaml ->
+            HomeGuiConfig.validate("creation-ui", yaml)
+            assertEquals(45, yaml.getStringList("Shape").joinToString("").length)
+            val components = yaml.getConfigurationSection("components")!!
+            yaml.getStringList("Shape").joinToString("").filter { it != ' ' }.forEach { symbol ->
+                val section = components.getKeys(false).map { components.getConfigurationSection(it)!! }
+                    .single { it.getString("symbol") == symbol.toString() }
+                assertEquals("dreamskyblock:gui_hitbox", section.getString("item-model"))
+            }
+        }
+        assertEquals("  CCCCC  ", main.getStringList("Shape")[2])
+        assertEquals("menu:create_confirm", main.getString("components.create.action"))
+        assertEquals("menu:invites", main.getString("components.join.action"))
+        assertEquals(" YYY NNN ", confirm.getStringList("Shape")[3])
+        assertEquals("create", confirm.getString("components.yes.action"))
+        assertEquals("menu:main", confirm.getString("components.no.action"))
+        main.set("components.create.item-model", "Bad Namespace:bad model")
+        val error = assertThrows(IllegalArgumentException::class.java) { HomeGuiConfig.validate("gui/main.yml", main) }
+        assertTrue(error.message!!.contains("components.create.item-model"))
+    }
+
     @Test fun `every menu resource has a valid shape and action mapping`() {
         HomeMenu.entries.forEach { menu ->
             val path = Path.of("src/main/resources/gui/${menu.file}.yml")
@@ -23,15 +48,21 @@ class HomeMenuConfigTest {
         }
     }
 
-    @Test fun `island menu exposes hologram toggle without replacing other actions`() {
+    @Test fun `help owns hologram toggle and island keeps merged information`() {
         val yaml = YamlConfiguration().apply { loadFromString(Files.readString(Path.of("src/main/resources/gui/island.yml"))) }
         HomeGuiConfig.validate("gui/island.yml", yaml)
-        assertEquals("#G     C#", yaml.getStringList("Shape")[3])
-        assertEquals("holograms", yaml.getString("components.holograms.action"))
+        assertEquals("#      C#", yaml.getStringList("Shape")[3])
+        assertFalse(yaml.contains("components.holograms"))
+        assertFalse(yaml.contains("components.upgrade"))
+        assertTrue(yaml.getStringList("components.info.lore").any { "<remaining_value>" in it })
         assertEquals("teleport", yaml.getString("components.teleport.action"))
-        assertEquals("menu:members", yaml.getString("components.members.action"))
+        assertEquals("menu:management", yaml.getString("components.info.action"))
+        assertFalse(yaml.contains("components.members"))
         val messages = MessageService(YamlConfiguration())
-        val name = messages.componentRaw(yaml.getString("components.holograms.name")!!)
+        val help = YamlConfiguration().apply { loadFromString(Files.readString(Path.of("src/main/resources/gui/help.yml"))) }
+        HomeGuiConfig.validate("gui/help.yml", help)
+        assertEquals("holograms", help.getString("components.holograms.action"))
+        val name = messages.componentRaw(help.getString("components.holograms.name")!!)
         assertEquals(TextDecoration.State.FALSE, name.decoration(TextDecoration.ITALIC))
     }
 

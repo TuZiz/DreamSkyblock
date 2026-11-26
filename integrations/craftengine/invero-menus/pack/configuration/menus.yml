@@ -1,0 +1,15 @@
+# 图片尺寸为原版五行箱子上半区域，单位为 GUI 像素。
+schema-version: 1
+images:
+  dreamskyblock_menus:server_menu:
+    height: 108
+    ascent: 13
+    font: 'dreamskyblock_menus:menus'
+    file: 'dreamskyblock_menus:gui/server-menu.png'
+    char: ''
+  dreamskyblock_menus:island_menu:
+    height: 108
+    ascent: 13
+    font: 'dreamskyblock_menus:menus'
+    file: 'dreamskyblock_menus:gui/island-menu.png'
+    char: ''

@@ -1,0 +1,63 @@
+# 五行游戏设置；卡片等比40×73，顶部相对底板下移18px。
+schema-version: 1
+images:
+  dreamskyblock_menus:settings_panel:
+    height: 108
+    ascent: 13
+    font: 'dreamskyblock_menus:settings'
+    file: 'dreamskyblock_menus:gui/settings/panel.png'
+    char: ''
+  dreamskyblock_menus:settings_hologram_on:
+    height: 73
+    ascent: -5
+    font: 'dreamskyblock_menus:settings'
+    file: 'dreamskyblock_menus:gui/settings/hologram-on.png'
+    char: ''
+  dreamskyblock_menus:settings_hologram_off:
+    height: 73
+    ascent: -5
+    font: 'dreamskyblock_menus:settings'
+    file: 'dreamskyblock_menus:gui/settings/hologram-off.png'
+    char: ''
+  dreamskyblock_menus:settings_hologram_unknown:
+    height: 73
+    ascent: -5
+    font: 'dreamskyblock_menus:settings'
+    file: 'dreamskyblock_menus:gui/settings/hologram-unknown.png'
+    char: ''
+  dreamskyblock_menus:settings_tracking_on:
+    height: 73
+    ascent: -5
+    font: 'dreamskyblock_menus:settings'
+    file: 'dreamskyblock_menus:gui/settings/tracking-on.png'
+    char: ''
+  dreamskyblock_menus:settings_tracking_off:
+    height: 73
+    ascent: -5
+    font: 'dreamskyblock_menus:settings'
+    file: 'dreamskyblock_menus:gui/settings/tracking-off.png'
+    char: ''
+  dreamskyblock_menus:settings_tracking_unknown:
+    height: 73
+    ascent: -5
+    font: 'dreamskyblock_menus:settings'
+    file: 'dreamskyblock_menus:gui/settings/tracking-unknown.png'
+    char: ''
+  dreamskyblock_menus:settings_income_on:
+    height: 73
+    ascent: -5
+    font: 'dreamskyblock_menus:settings'
+    file: 'dreamskyblock_menus:gui/settings/income-on.png'
+    char: ''
+  dreamskyblock_menus:settings_income_off:
+    height: 73
+    ascent: -5
+    font: 'dreamskyblock_menus:settings'
+    file: 'dreamskyblock_menus:gui/settings/income-off.png'
+    char: ''
+  dreamskyblock_menus:settings_income_unknown:
+    height: 73
+    ascent: -5
+    font: 'dreamskyblock_menus:settings'
+    file: 'dreamskyblock_menus:gui/settings/income-unknown.png'
+    char: ''

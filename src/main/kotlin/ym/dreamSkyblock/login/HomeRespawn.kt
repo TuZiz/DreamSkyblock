@@ -27,15 +27,19 @@ class HomeRespawn(private val plugin: DreamSkyblock, private val homes: HomeMana
         var teleporting = false
     }
     private val tasks = PaperWorldTasks(plugin)
-    private val sessions = mutableMapOf<UUID, Session>()
-    private var stopped = false
+    private val sessions = java.util.concurrent.ConcurrentHashMap<UUID, Session>()
+    @Volatile private var stopped = false
 
     @EventHandler(priority = EventPriority.MONITOR)
-    fun death(event: PlayerDeathEvent) { begin(event.entity) }
+    fun death(event: PlayerDeathEvent) {
+        if(event.isCancelled || dungeonOwnsRespawn(event.entity)) { clear(event.entity.uniqueId); return }
+        begin(event.entity)
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     fun respawn(event: PlayerRespawnEvent) {
         val player = event.player
+        if(dungeonOwnsRespawn(player)) { clear(player.uniqueId); return }
         // Explicit beds/anchors remain valid; home is the default when no respawn block applies.
         if (event.isBedSpawn || event.isAnchorSpawn || event.respawnReason == PlayerRespawnEvent.RespawnReason.END_PORTAL) {
             clear(player.uniqueId); return
@@ -71,18 +75,18 @@ class HomeRespawn(private val plugin: DreamSkyblock, private val homes: HomeMana
         if (stopped || !homes.ready || !player.hasPermission("dreamskyblock.use") || homes.byPlayer(player.uniqueId) == null) return
         val session = Session(player)
         sessions[player.uniqueId] = session
-        spawns.prepare(player.uniqueId).whenComplete { ticket, error -> tasks.global {
-            if (!current(session)) { ticket?.let(spawns::release); return@global }
-            if (error != null || ticket == null) { clear(player.uniqueId); return@global }
+        spawns.prepare(player.uniqueId).whenComplete { ticket, error -> tasks.entity(player) {
+            if (!current(session)) { ticket?.let(spawns::release); return@entity }
+            if (error != null || ticket == null) { clear(player.uniqueId); return@entity }
             session.ticket = ticket
-            ticket.ready.whenComplete { location, failure -> tasks.global loaded@{
+            ticket.ready.whenComplete { location, failure -> tasks.entity(player) loaded@{
                 if (!current(session)) return@loaded
                 if (failure != null) {
                     plugin.logger.log(Level.WARNING, "死亡重生家园预加载失败 player=${player.uniqueId}, home=${ticket.home.id}", failure)
                     clear(player.uniqueId)
                 } else { session.location = location; finish(session) }
             } }
-        } }
+        }.exceptionally { ticket?.let(spawns::release); null } }
     }
 
     private fun current(session: Session): Boolean = !stopped && plugin.isEnabled && session.player.isOnline &&
@@ -97,8 +101,8 @@ class HomeRespawn(private val plugin: DreamSkyblock, private val homes: HomeMana
         if (player.world.uid == location.world.uid) { clear(player.uniqueId); return }
         session.teleporting = true
         try {
-            player.teleportAsync(location).whenComplete { ok, error -> tasks.global {
-                if (!current(session)) return@global
+            player.teleportAsync(location).whenComplete { ok, error -> tasks.entity(player) {
+                if (!current(session)) return@entity
                 if (error != null || ok != true) plugin.logger.log(Level.WARNING,
                     "重生回岛传送失败 player=${player.uniqueId}, home=${ticket.home.id}", error)
                 clear(player.uniqueId)
@@ -110,6 +114,11 @@ class HomeRespawn(private val plugin: DreamSkyblock, private val homes: HomeMana
     }
 
     private fun clear(id: UUID) { sessions.remove(id)?.ticket?.let(spawns::release) }
+
+    /** Optional Dungeon integration: its death-time ownership exists until respawn MONITOR. */
+    private fun dungeonOwnsRespawn(player: Player): Boolean =
+        player.persistentDataContainer.has(org.bukkit.NamespacedKey("dungeon", "permanent_death_spawn"),
+            org.bukkit.persistence.PersistentDataType.STRING)
     fun stop() {
         stopped = true
         sessions.keys.toList().forEach(::clear)

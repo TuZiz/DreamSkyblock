@@ -7,6 +7,8 @@ import java.util.concurrent.CompletableFuture
 interface DreamSkyblockApi {
     fun isReady(): Boolean
     fun findHome(homeId: UUID): HomeView?
+    /** Persisted home creator name; does not depend on an online player or perform disk/network IO. */
+    fun findHomeOwnerName(homeId: UUID): String?
     fun findHomeByMember(playerId: UUID): HomeView?
     fun allHomes(): List<HomeView>
     fun isMember(homeId: UUID, playerId: UUID): Boolean

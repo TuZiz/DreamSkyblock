@@ -14,7 +14,7 @@ import java.util.logging.Level
 /** Paper configuration thread waits; all home/world access runs on the global owner thread. */
 class HomeInitialSpawn(private val plugin: DreamSkyblock, private val spawns: HomeSpawnService) : Listener {
     private val tasks = PaperWorldTasks(plugin)
-    private val pending = mutableMapOf<io.papermc.paper.connection.PlayerConfigurationConnection, HomeSpawnService.Ticket>()
+    private val pending = java.util.concurrent.ConcurrentHashMap<io.papermc.paper.connection.PlayerConfigurationConnection, HomeSpawnService.Ticket>()
     private var cleanup: ScheduledTask? = plugin.server.globalRegionScheduler.runAtFixedRate(plugin, {
         pending.keys.filter { !it.isConnected }.toList().forEach { connection -> pending.remove(connection)?.let(spawns::release) }
     }, 20L, 20L)
@@ -24,7 +24,7 @@ class HomeInitialSpawn(private val plugin: DreamSkyblock, private val spawns: Ho
         val connection = event.connection
         val id = connection.profile.id ?: return
         // Only this async configuration callback may wait. Never block a world/player scheduler.
-        val request = spawns.prepare(id)
+        val request = spawns.prepare(id, event.spawnLocation.world.uid)
         val result = request.thenCompose { ticket ->
             if (ticket == null) java.util.concurrent.CompletableFuture.completedFuture(null)
             else tasks.global {

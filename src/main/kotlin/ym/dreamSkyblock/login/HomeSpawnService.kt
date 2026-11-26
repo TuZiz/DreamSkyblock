@@ -16,12 +16,15 @@ class HomeSpawnService(private val plugin: DreamSkyblock, private val homes: Hom
         val ready = CompletableFuture<Location>()
     }
     private val tasks = PaperWorldTasks(plugin)
-    private val tickets = mutableSetOf<Ticket>()
-    private var stopped = false
+    private val tickets = java.util.concurrent.ConcurrentHashMap.newKeySet<Ticket>()
+    @Volatile private var stopped = false
 
-    fun prepare(playerId: UUID): CompletableFuture<Ticket?> = tasks.global {
+    fun prepare(playerId: UUID, loginWorldId: UUID? = null): CompletableFuture<Ticket?> = tasks.global {
         if (stopped || !homes.ready) return@global null
         val home = homes.byPlayer(playerId)?.takeIf { it.status == "ACTIVE" && !worlds.isBusy(it) } ?: return@global null
+        // Login preserves the server-selected world. Unloaded-island recovery is handled
+        // after join by HomeLoginReturn's persisted return intent, not by ownership alone.
+        if (loginWorldId != null && worlds.getLoaded(home)?.uid != loginWorldId) return@global null
         val template = plugin.configService.templates[home.templateId] ?: return@global null
         val ticket = Ticket(home, worlds.holdSpawn(home))
         tickets.add(ticket)
@@ -39,7 +42,7 @@ class HomeSpawnService(private val plugin: DreamSkyblock, private val homes: Hom
     /** Main thread, including disconnect and disable. Idempotent per reservation. */
     fun release(ticket: Ticket) {
         if (!tickets.remove(ticket)) return
-        ticket.release()
+        tasks.global { ticket.release() }
     }
 
     fun valid(playerId: UUID, ticket: Ticket): Boolean = !stopped && tickets.contains(ticket) &&

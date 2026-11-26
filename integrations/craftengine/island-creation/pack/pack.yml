@@ -1,0 +1,7 @@
+# 五行箱子的上半菜单皮肤，运行图片均为 176×108。
+schema-version: 1
+name: '空岛创建菜单'
+author: 'DreamSkyblock'
+version: '1.0.0'
+description: '创建空岛与创建确认的原版比例像素皮肤'
+namespace: dreamskyblock

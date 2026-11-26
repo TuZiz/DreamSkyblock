@@ -1,0 +1,30 @@
+schema-version: 1
+title: '<#FFFFFF><font:dreamskyblock_menus:gameplay_space></font><font:dreamskyblock_menus:gameplay_cards></font><font:dreamskyblock_menus:gameplay_space></font><font:dreamskyblock_menus:gameplay_cards></font>'
+rows: 6
+layout:
+  - 'FFFLLLLLL'
+  - 'FFFLLLLLL'
+  - 'FFFLLLLLL'
+  - 'LLLLLLLLL'
+  - 'LLLLLLLLL'
+  - 'LLLLLLLLL'
+items:
+  F: # 进入农场
+    material: 'PAPER'
+    item_model: 'dreamskyblock_menus:hitbox'
+    name: '<#45613A>进入农场'
+    lore:
+      - '<#768366>播种、养护与采收。'
+      - ''
+      - '<#5D7C42>▸ 左键进入我的菜园'
+    action:
+      left: |-
+        menu close
+        playerPerform "nextdoorfarm:farm home"
+        true
+  L: # 未开放的预留卡片
+    material: 'PAPER'
+    item_model: 'dreamskyblock_menus:hitbox'
+    name: '<#99947C>未开放'
+    lore:
+      - '<#A19C87>玩法暂未开放。'

@@ -1,0 +1,75 @@
+# 五行服务器菜单；传送、主城、大厅与家园四个像素入口
+schema-version: 1
+title: '<#FFFFFF><font:dreamskyblock_menus:space></font><font:dreamskyblock_menus:menus></font>'
+rows: 5
+
+layout:
+  - '  PPPPP  '
+  - '  SSSSS  '
+  - '  DDDDD  '
+  - '  HHHHH  '
+  - '         '
+
+items:
+  'P':
+    material: 'PAPER'
+    item_model: 'dreamskyblock_menus:hitbox'
+    name: '<#D7E7C1>✦ 传送菜单 <#8A9A86>| <#A8B89C>星界航标'
+    lore:
+      - ''
+      - '<#A8B89C> ▪ 浏览服务器全部公共地标与区域'
+      - '<#A8B89C> ▪ 快速前往各个功能建筑与世界'
+      - ''
+      - '<#D7E7C1> ▶ 左键点击打开传送面板'
+    action:
+      left: |-
+        menu open "传送"
+        true
+
+  'S':
+    material: 'PAPER'
+    item_model: 'dreamskyblock_menus:hitbox'
+    name: '<#D7E7C1>✦ 回到主城 <#8A9A86>| <#A8B89C>核心枢纽'
+    lore:
+      - ''
+      - '<#A8B89C> ▪ 返回服务器中心广场区域'
+      - '<#A8B89C> ▪ 进行商人交易、强化与日常补给'
+      - ''
+      - '<#D7E7C1> ▶ 左键点击立即传送'
+    action:
+      left: |-
+        menu close
+        playerPerform "warp spawn"
+        true
+
+  'D':
+    material: 'PAPER'
+    item_model: 'dreamskyblock_menus:hitbox'
+    name: '<#D7E7C1>✦ 副本大厅 <#8A9A86>| <#A8B89C>征战集结'
+    lore:
+      - ''
+      - '<#A8B89C> ▪ 前往冒险者集结备战大厅'
+      - '<#A8B89C> ▪ 组队挑战各大秘境首领与副本'
+      - ''
+      - '<#D7E7C1> ▶ 左键点击立即前往'
+    action:
+      left: |-
+        menu close
+        playerPerform "dungeon lobby"
+        true
+
+  'H':
+    material: 'PAPER'
+    item_model: 'dreamskyblock_menus:hitbox'
+    name: '<#D7E7C1>✦ 个人家园 <#8A9A86>| <#A8B89C>专属空岛'
+    lore:
+      - ''
+      - '<#A8B89C> ▪ 返回您的私人领地或创建新空岛'
+      - '<#A8B89C> ▪ 自由建造、耕种与管理领地成员'
+      - ''
+      - '<#D7E7C1> ▶ 左键点击进入家园'
+    action:
+      left: |-
+        menu close
+        command "dreamskyblock:home"
+        true

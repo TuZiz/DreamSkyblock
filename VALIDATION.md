@@ -1,5 +1,29 @@
 # 存储重构验证记录
 
+## 2026-11-06 Canvas V6 恢复旧版视觉并移除重复回岛
+
+- V5被用户否决，替换为本地D:/infinite-canvas在Edge连接Agent后的两张实际生成图，模型gpt-image-2.6-flare，画布MWHZrfVgzphwUecBzWxUo。原图、提示词与原生导出在output/imagegen/menu-canvas-v6；176×108 RGB不透明，4倍最近邻预览已目视检查。本地仅修“传送”两字及左上书本槽位，未通篇改写旧中文字。
+- 两菜单布局按图片调整；空岛删除T及其独立回岛按钮，I右键脚本逐字保留，市场移到底部中央。其他items和bindings深比较一致；传送、普通副本正式文件字节保持，石址执行dungeon enter lost_altar。
+- 安装Invero1.4.17真实PatchedLoader/codec/Kether/JS检查4菜单、15组动作、16脚本通过，日志target/verification/logs/invero-menu-canvas-v6.log；既有Unsafe弃用警告保留。不等于完整BaseMenu或游戏客户端验收。
+- 正式与项目两张PNG、两菜单共8目标已备份并原子替换，SHA256回读一致；备份和清单target/verification/diagnostics/menu-canvas-v6-deployment.json。两个prepare脚本同步新源与布局。本轮无JAR变更、不运行Maven，未自动重载菜单/重建资源包/重启服务器；游戏显示及边缘点击体验仍待验证。
+
+## 2026-11-06 恢复旧版统一12像素字形比例
+
+- 用户实服截图否决上轮12/10/8px混用排版。以图二/图三旧版为字号依据，将两图13项文字统一为原生12px Fusion Pixel，不缩放字形；既有图标原像素移动，按图标+文案整体对齐。为容纳完整四字回到空岛，底部两按钮沿用原倒角扩为76px，底行点击区改KKKK TTTT，其余布局、动作、Lore及命令绑定不变。
+- 新贴图位于output/imagegen/menu-type-v5；尺寸176×108、RGB不透明、二值mask；13项font_size均为12；允许排字、图标移位和底部按钮范围外像素变化为0。两张4倍最近邻预览已目视检查，prepare.py与重基脚本同步新源/热区。
+- Node YAML重复键/9列/映射校验和逐项items/bindings对照通过。安装Invero1.4.17真实PatchedLoader YAML→JSON、action/绑定codec及Kether解析通过：4菜单、16组action、17条脚本。日志target/verification/logs/invero-menu-type-v5.log。探针unchecked和既有Unsafe弃用警告不变。
+- 正式传送/普通副本/主菜单YAML保持原字节，石址玩家命令dungeon enter lost_altar保留。仅两张贴图和空岛底行热区更新；无DreamSkyblock代码/JAR变化，不执行Maven。
+- 部署明细target/verification/diagnostics/menu-type-v5-deployment.json；未自动重启/重载Invero、重生成CE包或进入游戏，实际客户端字号/点击边缘及用户认可待确认。
+
+## 2026-11-06 双菜单原生文字修复与普通副本入口
+
+- 大图最近邻缩至176×108使中文字形缺笔画。沿用已选两张布局，13项标签用Fusion Pixel原生12/10/8px二值字形重新排字；最终176×108 RGB不透明，标签框外像素变化0。两张4倍最近邻预览已目视检查；未重新生图。prepare.py改为清晰源，历史export-v4.py标明只导出草稿。
+- 正式传送.yml增加普通副本入口，新建普通副本.yml：石址，难度新手、服务器常驻，先menu close再playerPerform "dungeon enter lost_altar"，附返回传送菜单。核对本服Dungeon的lost_altar/farming.yml启用且ID一致，语言文件确认名称石址；未修改Dungeon业务或权限。
+- 安装Invero1.4.17真实PatchedLoader YAML→JSON、绑定/action codec、Kether解析通过：4菜单、16组action、17条脚本。日志target/verification/logs/invero-crisp-dungeon.log。布局9列/映射/重复键、入口和返回动作、两主菜单YAML字节保留均通过；原Reflex Unsafe和探针unchecked警告仍存在。
+- 技能通用Python YAML检查器因当前解释器无PyYAML未运行；使用本地Infinite Canvas的Node YAML解析器（含重复键错误检查）及安装JAR真实解析替代，未向项目安装新依赖。
+- 两份YAML和两张贴图的正式/项目共6目标已备份、原子替换并逐文件SHA256回读一致；清单target/verification/diagnostics/crisp-dungeon-deployment.json；备份plugins/DreamSkyblock/backups/crisp-dungeon-menus-20261106-143951-561783。两张正式主页YAML未改，保留所有既有热区、动作和绑定。
+- 未自动重启/重载Invero、重新生成CE资源包或执行真实玩家命令；完整BaseMenu、游戏客户端清晰度及点击→实际入场待实测。仅配置与贴图，无Kotlin或JAR改动，不执行Maven或发布JAR。
+
 验证日期：2026-10-14。所有服务端运行在项目 `run/` 下的隔离目录，使用回环地址，没有访问生产玩家数据。
 
 ## API 与构建
@@ -308,3 +332,243 @@ Neuron check_c5216988be79493db67b 通过，报告 target/verification/neuron/bor
 - 本地 Paper 26.2 build126 API 与 Leaf 26.2 build124 字节码已检查：CraftPlayer 个人边界 getter 返回缓存，setter 可重发同一对象；PlayerList 世界初始化存在发送真实世界边界的路径。证据 target/verification/api/craftplayer-border-bytecode.txt、playerlist-border-bytecode.txt。
 - Maven package 成功，HomeBorderOutlineTest 4项通过；日志 target/verification/logs/border-resync-build.log。隔离 Leaf 探针 DREAM BORDER ALL PASS，覆盖非空缓存边界在重生/传送后重新发送、48真实边界、64升级后的粒子范围、访客、其他插件边界所有权、进出世界和退出/停止清理；日志 target/verification/logs/border-resync-leaf.log。测试使用代理玩家和真实 Leaf 世界/调度器，未验证实际网络客户端画面。
 - 最终 JAR 已检查不含服务端 API 和测试探针，并同名覆盖指定 plugins 目录，SHA-256 一致；部署详情 target/verification/diagnostics/border-resync-deployment.json。原生产 JAR 已备份，隔离服原插件 JAR 已恢复；未重启/重载生产服。已有 Shade 重叠资源、测试服 OSHI 环境诊断不属于本次新增问题。
+
+## 2026-10-25 家园虚空救援
+
+- 续接未完成的 HomeVoidListener，默认在受管理家园世界生效，成员与访客一致。移动低于世界 minHeight-8 时保留 X/Z 和视角，返回 maxHeight-2 后自然下落（标准主世界为 Y318）；落入原位置仍无地面的区域会再次循环救援。其他世界不变。VOID 伤害事件提供无移动包时的传送兜底，传送失败不取消原伤害。
+- 救援下降期间重置 fallDistance，阻止该次 FALL 伤害；着地、飞行、滑翔、入水结束下降保护。主动传送、取消或改写救援移动、退出、死亡、换世界、卸载世界及禁用时清理状态。监听器不执行IO或创建线程。
+- JDK25 Maven 离线 package 成功，HomeVoidListenerTest 共6项通过，零失败/错误/跳过。覆盖同列顶部和视角、其他世界、普通移动、一次摔落保护、虚空伤害成功/失败、救援取消/改写、主动传送及退出/停用。日志 target/verification/logs/home-void-build.log。已有 systemPath/API弃用/Shade元数据告警保留。本次没有真实网络客户端或完整下落落地实服验证，不声明复刻模组的全部细节。
+- Neuron task_a3a56e48cb304d5f968d，check_94759f955a1941cabd23 无规则错误；实际客户端验证未执行，状态 pending。未改 GUI/YAML/玩家文案。
+- 正式JAR已审计包含HomeVoidListener，不含服务端API、JUnit、测试类、探针或源码；中间JAR归档到 target/verification/build-intermediates/home-void-original.jar。已同名更新 C:/Users/32633/Desktop/leaf/plugins/DreamSkyblock-1.0-SNAPSHOT.jar，旧JAR备份到插件 DreamSkyblock/backups/home-void-20261025/before-home-void.jar。源/目标SHA-256均为 B1FA23D1E39631BD28514EF96D5ED958D03399460E858C40DD8CA6B1FC21A1C7，部署详情 target/verification/diagnostics/home-void-deployment.json。没有重启或重载生产服务器。
+# CraftEngine 创建空岛像素菜单
+
+- 仅覆盖 `main.yml` 与 `create_confirm.yml`，运行图片均为 176×108 RGBA，合计 10,468 字节；标题字体 height=108/ascent=13，横向偏移 -8，不覆盖玩家背包。
+- `mvn -Dtest=HomeMenuConfigTest package`：12 项通过；新增可选 `item-model` 的合法资源 ID 校验，保留现有普通菜单渲染行为。构建保留原有 Shade 重复清单警告。
+- 独立 Purpur 26.2-2633 / Java 25 / CraftEngine 26.9.2：原生渲染两个 45 格菜单，透明物品模型、悬停名称与指定槽位动作通过；实际渲染入口导出 42 项 Component。
+- 隔离 CE 工作流 generate/validate/zip 通过，产物包含两个字体字形、空物品模型和两个 PNG；打包前后尺寸及 RGBA 内容一致。日志：`C:/Users/32633/AppData/Local/DreamSkyblock-creation-ui/creation-ui-native.log`。测试服已正常停止；测试服首次平坦世界配置与 Windows 性能计数器诊断不属于此次插件失败。
+- Neuron `task_ec7a28c66d3343d8b2d6` / `check_09d006a7e97749879a84` 通过，无 issues/pending；报告与 Component 位于 `target/verification/neuron/creation-ui-*`。
+- CE 源文件与两份 GUI 已同步指定目录，8 文件 SHA-256 一致；重复安装不写文件。旧 GUI 备份：`C:/Users/32633/Desktop/leaf/plugins/DreamSkyblock/backups/creation-ui-20261025-212726-874201`。
+- 正式 JAR 已同步 `C:/Users/32633/Desktop/leaf/plugins/DreamSkyblock-1.0-SNAPSHOT.jar`，SHA-256：`73D317C476DC9BE5DD7A5BE280F6BC0BEDD4DA5855EAC271071A136453FB3704`；不包含 Bukkit/Paper API 和源码。
+- 未重启或重载正式服；玩家下载新资源包后的客户端最终显示与实际点击仍需确认。操作说明见 `integrations/craftengine/island-creation/README.md`。
+## 空岛信息合并与帮助中心全息字入口
+
+- 内置有岛主页将当前价值、下一等级门槛、剩余价值和最高边界合并至“我的空岛信息”，移除独立升级按钮；全息字开关位于帮助中心。帮助动作仅接受 HELP 菜单，有岛成员保持原 Genlite 调用，无岛玩家获得现有语言提示。
+- `HomeInformationMigration` 对旧菜单做内存迁移，不重写磁盘注释；保留自定义 Lore、嵌套字段并避让帮助菜单已用槽位和符号，重复迁移结果一致。源资源与服务器 GUI 配置均已更新。
+- `mvn -Dtest=HomeMenuConfigTest,HomeInformationMigrationTest package`：14 项通过。隔离 Purpur 26.2 原生菜单、真实渲染入口、无岛提示、成员 Genlite 不可用分支和旧主页动作拒绝通过；隔离服未安装 Genlite，未执行其实际开关功能。探针最初早于异步初始化执行，及反射需要 PAPI 类型，补充等待和隔离服 PAPI 依赖后通过；均为探针环境修正。
+- Invero 源文件与正式 workspace 的“空岛菜单.yml”同步合并信息、移除旧全息字按钮；帮助按钮仍调用内置 `dreamskyblock:home help`。保留用户期间新增的 Q/K（任务中心/玩家市场）。安装的 Invero 1.4.17 实际 PatchedLoader YAML→JSON、动作反序列化与 Kether 检查通过：源副本 7 动作，正式副本 9 动作。未执行完整 Invero BaseMenu 或真实客户端验收；未改动 workspace 的主菜单。
+- Neuron `task_8fdad4952c004fd4a289` / `check_206cf9e457424ac49217` 通过，无 issues/pending。报告在 `target/verification/neuron/menu-reorganization-report.json`；原生日志在 `C:/Users/32633/AppData/Local/DreamSkyblock-creation-ui/menu-reorganization.log`。
+- 三份配置已部署，原文件及原 JAR 备份在 `C:/Users/32633/Desktop/leaf/plugins/DreamSkyblock/backups/menu-reorganization-20261025-221231`。正式 JAR 被运行中的服务器锁定，因此新 JAR 暂存 `plugins/update/DreamSkyblock-1.0-SNAPSHOT.jar`，与 Maven 产物 SHA-256 一致：`0eee125fc9e7031d0ad760b161aec9e3fc30ac62e967358668c855fc933957c5`。服务器配置 `settings.update-folder=update`，需下次重启生效；未自动重启或重载服务器。
+- D 盘空间不足，原 target 产物完整移至 `C:/Users/32633/AppData/Local/DreamSkyblock-build-target`，项目 target 使用目录联接保持原验证路径；没有清理或删除用户文件。
+## 空岛信息按钮集中管理入口
+
+- 保留“我的空岛信息”的统计 Lore，点击打开独立三行 `gui/management.yml`，提供成员管理、空岛设置、帮助中心及返回入口；主页移除三个独立按钮。新增菜单只允许有岛玩家进入，继续使用 `.use` 权限与现有子菜单动作。
+- 旧配置通过 `HomeManagementMigration` 在内存中归拢；迁移旧自定义按钮文本和嵌套字段，保留已经定制的管理菜单样式，重复加载不追加重复提示，不改写磁盘注释。
+- 16 项 JUnit 与 Maven package 通过；隔离 Purpur 26.2 原生验证了 `performMenuAction(info)` → MANAGEMENT → MEMBERS / SETTINGS / HELP 三条实际导航路径，统计保留，原独立按钮不再映射。实际渲染入口导出45项本次相关 Component，Neuron `task_0bd7081d436b4045abc3` / `check_edce6f26317b4a4a856a` 通过。未执行真实客户端操作；日志在 `C:/Users/32633/AppData/Local/DreamSkyblock-creation-ui/management.log`。
+- 同步 Invero 源副本和 workspace“空岛菜单.yml”。沿用已验证命令桥 `dreamskyblock:home menu-action info`；保留用户最后调整的 W/Q/K 位置与 `ismenu` 绑定。实际 Invero1.4.17 YAML→JSON / 动作codec / Kether 解析通过（7动作），未执行完整 Invero BaseMenu 客户端验证。
+- 两份内置配置（island、management）、Invero工作区和更新 JAR 共4文件部署并 SHA-256 校验；旧文件备份：`C:\Users\32633\Desktop\leaf\plugins\DreamSkyblock\backups\management-20261025-223604`。正式服运行中，新 JAR 继续放在 `plugins/update/DreamSkyblock-1.0-SNAPSHOT.jar`，SHA-256 `81b51fe9cd8974924d4388d5ba221ec5ee4df3bf1e58b9a9f92397dcb498c59a`，需下次重启生效；没有自动重启或重载服务器。
+
+## Invero 两个菜单 V5 像素皮肤（2026-10-27）
+
+- `integrations/craftengine/invero-menus` 保存 CE 包、两份 workspace 菜单、可重复准备与带 SHA-256 防覆盖检查的安装器。运行图片 176×108，中央按钮保持 76×18 并居中。沿用用户选定 V5 图片，不再生图；原命令绑定、功能动作、名称、Lore 和 PAPI 逐项相等。
+- 本地 Invero 1.4.17 已验证 `item_model` → `ItemMeta.setItemModel`，透明 PAPER 使用 `minecraft:empty`。发现现代 NMS 标题把 Adventure 转 legacy 再 literal，字体丢失；最小补丁仅改变 NMSImplModern 标题的三个调用点为 JSON 往返。两个菜单显式使用 virtual 模式，不改全局 Invero 设置和 DreamSkyblock 导航。
+- 两菜单静态检查零错误；安装 JAR 的 YAML→JSON、动作 codec、Kether 共 11 动作通过，内嵌 JS 编译及主城世界存在/缺失分支模拟通过。隔离 Leaf 26.3 / Java25 / CE26.9.2 / 修复版 Invero1.4.17 成功加载完整 BaseMenu、验证标题字体/白色原生转换与修复类加载。CE generate/validate/zip 通过；ZIP 中两 PNG 像素与源一致，字体高度108、ascent13、负空格-8、空模型正确。日志：`target/verification/logs/invero-skins-native.log`。首次缺少映射资产导致超时，复制本地既有缓存后解决；两次探针反射接收者与颜色序列化断言错误修正后通过。Windows OSHI 性能计数器警告为环境问题，菜单测试无新增加载错误。
+- 共9文件安装并核验 SHA-256。原菜单和原 Invero JAR 完整备份在 `C:/Users/32633/Desktop/leaf/plugins/DreamSkyblock/backups/invero-pixel-menus-20261027-192935-808003`。Invero 修复 JAR 暂存 `plugins/update/Invero-1.4.17.jar`，下次重启加载；未重启或重载正式服。生效需重启后执行 `ce reload pack`，玩家接受更新包。
+- 尚未执行真实 Minecraft 客户端显示/悬停/逐按钮点击与动态物品 Component 验收。Neuron `task_db86275c566443a69fa7` / `check_392e51339d1c4d6085d2` 无 issues，因客户端验收未执行保留 pending，不标 verified。原 DreamSkyblock JAR 与代码本轮不变，无需 Maven 重建。
+
+## CraftEngine 两个 DreamSkyblock 资源目录合并（2026-11-01）
+
+- 将正式服 `resources/dreamskyblock-creation` 与 `resources/dreamskyblock-invero-menus` 合并到 `resources/dreamskyblock`；保留 dreamskyblock / dreamskyblock_menus 两个资源命名空间、4个图片 ID、字体、模型及所有贴图字节。Genlite 等目录不变。
+- 10个资源文件逐文件 SHA-256 一致；显式资源 ID 无冲突、贴图路径全部可解析，重复运行合并器不产生写入。旧目录完整归档：`C:/Users/32633/Desktop/leaf/plugins/DreamSkyblock/backups/ce-pack-merge-20261101-201400-341828`，含 manifest。
+- 两个安装脚本统一使用同一目标目录和共享 `integrations/craftengine/pack.yml`，避免覆盖为不同的包信息或重新生成拆分目录；安装说明同步。
+- 本次仅整理资源目录和元信息，未修改菜单、图片或插件代码，不执行 Maven 构建；未重启/重载正式服，也未重新生成完整 CE 包或执行客户端验收。生效时执行 `ce reload pack`。
+
+## 非空岛世界上线位置保留（2026-11-04）
+
+- 根因：HomeInitialSpawn 对每个有空岛的玩家都无条件调用出生预加载，覆盖服务器提供的主城等世界位置。现在传入事件原出生世界 UUID，HomeSpawnService 在 global 调度器内确认它是玩家自己已加载空岛，才继续模板选择和预加载。普通世界上线保留原位置；空岛卸载后的 PDC 登录兜底和死亡重生路径不变。
+- `mvn -Dtest=HomeSpawnServiceTest package` 通过，6项测试覆盖非岛世界、自己已加载岛、卸载岛、无岛玩家、重生入口及实际 AsyncPlayerSpawnLocationEvent 保持位置。服务测试使用调度器/世界替身执行真实方法，不属于真人重登实测。构建保留已有 shade 重叠元信息警告，无新增编译或测试失败。
+- 正式 JAR 已同名更新到 `C:/Users/32633/Desktop/leaf/plugins/DreamSkyblock-1.0-SNAPSHOT.jar`；SHA-256 `67680F157105A95EAD3E3E111094DA2480832306F4040D34FAD704B41DF86DE7` 与构建产物一致。旧包备份 `plugins/DreamSkyblock/backups/login-world-20261104-154557`。检查最终 JAR 不含 Bukkit/Paper API、JUnit、源码或本次测试类。未自动重启服务器，重启后生效。
+- Neuron task_4815871ab0044e83b69b 已提交真实测试/构建/部署证据，因未执行真实玩家重登保留 pending。没有修改 GUI、语言、配置及数据库格式。
+
+
+## 2026-11-04 主城主菜单移除返回主城
+
+- Infinite Canvas（Edge已打开画布）使用gpt-image-2.5-flare参考现有图生成，导出176×108，三按钮均76×18；原图/提示词/预览见output/imagegen/server-menu-no-spawn。
+- YAML唯一键解析、5×9布局和映射、H条目删除、I/Q/K完整条目及绑定/标题与部署前一致：通过。
+- 正式Invero主菜单与CraftEngine主菜单图已备份同步，逐文件SHA-256回读一致；空岛菜单和贴图未变化。
+- 无代码/JAR变动，不运行Maven。未重启/重载正式服；安装版Invero完整加载、客户端资源包和三个按钮实际点击仍待游戏验收。
+- 备份：C:\Users\32633\Desktop\leaf\plugins\DreamSkyblock\backups\server-menu-no-spawn-20261104-165301
+
+
+## 2026-11-04 主菜单按图一统一画风
+
+- 原Infinite Canvas画布使用gpt-image-2.5-flare，以用户图一为实际风格参考，生成灰米石格/立体灰绿按钮/棕框；修正上版平涂背景。原稿与对比见output/imagegen/server-menu-island-style。
+- 176×108导出、三个76×18按钮位置、并排目视检查、项目/正式贴图SHA-256回读一致：通过。两个Invero菜单YAML及空岛贴图hash保持不变。
+- 仅贴图和生成来源/文档变动，不执行Maven；未重载正式服，客户端资源包生效效果仍待实测。
+- 备份：C:\Users\32633\Desktop\leaf\plugins\DreamSkyblock\backups\server-menu-island-style-20261104-170341
+
+
+## 2026-11-04 两个UI背景完全不透明
+
+- 主菜单已有alpha全255，保留原文件；空岛图alpha原为3–255，去掉透明通道并同步项目/正式CE纹理，原RGB逐像素保持。
+- 两张纹理176×108、alpha全255、部署SHA-256回读一致、Invero菜单YAML不变、导出脚本语法：通过。prepare导出统一RGB以防透明回退。
+- 输出及检查见output/imagegen/opaque-menus，备份：C:\Users\32633\Desktop\leaf\plugins\DreamSkyblock\backups\opaque-menus-20261104-183230。
+- 无代码/JAR变动，不执行Maven；未重载资源包/游戏验收。
+
+
+## 2026-11-04 服务器主菜单覆盖格子背景
+
+- 修正上次仅检查alpha的范围：用户截图中的主菜单格子已烘焙进RGB，改为空岛菜单同款实底；三个按钮裁剪区及标题字形像素保持。
+- 原生176×108、alpha全255、按钮像素一致、标题字形保持、项目/正式SHA-256回读一致：通过。Invero两个YAML及空岛图未变。
+- prepare主菜单源已更新，防止恢复旧格子版。输出和报告：output/imagegen/server-menu-solid-background。
+- 备份：C:\Users\32633\Desktop\leaf\plugins\DreamSkyblock\backups\server-menu-solid-background-20261104-183831；未重载资源包/游戏验收，无JAR变更不执行Maven。
+
+## 2026-11-04 Invero旧虚拟窗口刷新串屏
+
+- 本地Invero 1.4.17字节码确认：InventoryPacket.open$lambda$7每20 tick发送全库存，窗口isViewing仅依赖关闭时未恢复的closed字段；虚拟容器共用119。旧窗口可持续覆盖新窗口按钮，与截图中服务器背景出现中央仓库提示一致。
+- PatchInveroWindowRefresh只替换该回调一处检查为WindowManagerKt.isRegistered；不全局修改isViewing，避免破坏先注销再关窗的现有逻辑。保留已安装Adventure标题补丁。
+- 实际JAR回调字节码提取测试（平台边界替身）：原版旧任务覆盖复现；补丁活动窗口刷新、切换取消、关闭取消均通过，Java -Xverify:all通过。测试替身不能代表游戏验收。
+- 仅集成补丁工具/JAR变化，不修改DreamSkyblock Kotlin或资源，不运行无关Maven构建。两JAR条目差异和部署SHA-256结果见target/verification/diagnostics/invero-refresh-deployment.json。
+- 修复版暂存plugins/update/Invero-1.4.17.jar，原JAR已备份；完整重启后生效。未自动重启/重载服务器，真实客户端闪烁仍待验证。
+
+## 2026-11-04 用户澄清悬停闪动：避免活动按钮周期重发
+
+- 用户澄清：只有鼠标所在按钮闪动，没有发白。上一节旧窗口覆盖是可复现缺陷，不能据此认定用户悬停闪动已解决。
+- 补充核对实际updatePlayerItems(true)：即使活动窗口也每秒调用全库存update，反复发送所有按钮。改为沿用update(int...)仅同步玩家背包范围，保留首次打开/主动菜单刷新。原旧窗口取消补丁继续保留。
+- 从原/新JAR提取实际定时回调及updatePlayerItems字节码，平台边界替身回归、Java -Xverify:all通过：原版全库存重发复现；新版本连续5次只发送45–80背包槽位、36项映射保持、悬停菜单物品保持、初始不发包，以及旧窗口切换/关闭取消通过。
+- 仅InventoryPacket.class变化，其余JAR条目保持；正式update目录旧暂存包备份后原子替换并核验SHA-256，详情见target/verification/diagnostics/invero-hover-deployment.json。Invero workspace和CE图片未修改，无需改图或重新打资源包。
+- 尚未重启服务器或实测Minecraft客户端，悬停闪动消除仍为pending；本轮不涉及DreamSkyblock构建，不运行无关Maven。
+
+## 2026-11-05 创造模式离岛恢复飞行
+
+- 修正HomeProtectionListener离岛无条件allowFlight=false，以及HomeWorldSettings将岛屿飞行开关直接覆盖所有游戏模式的问题。统一HomeFlightSettings：创造/旁观始终允许飞行；生存/冒险按岛屿开关处理，禁飞时结束当前飞行；不主动让站立玩家起飞。
+- 跨世界传送在MONITOR且ignoreCancelled=true处理，已取消传送不再改变飞行。沿用现有玩家事件及世界设置执行线程，无新任务或状态缓存。
+- Maven -Dtest=HomeFlightSettingsTest package成功，3项测试覆盖四种模式、飞行许可恢复、正在飞行的保留/撤销。测试使用Player代理，未执行真实玩家跨世界验收。已有shade的module-info/MANIFEST重复警告仍存在。
+- 正式JAR包含新策略类，未打入Paper/Bukkit API、测试或源码；14337450字节。自动更新plugins/DreamSkyblock-1.0-SNAPSHOT.jar，SHA-256=A06829078B6A4A982EB128CD71BD8A5243F1458794822CD8D8F33225F3E795A4，与产物一致。
+- 原JAR备份在plugins/DreamSkyblock/backups/creative-flight-20261105-184832；未重启或重载服务器，新代码待重启生效。部署报告target/verification/diagnostics/creative-flight-deployment.json。
+
+## 2026-11-06 /is gui统一到现有Invero空岛菜单
+
+- 用户最新要求替代旧“独立副本、不接管有岛主页”约定。原正式invero.yml禁用且指向不存在的旧菜单名，导致/is gui仍用内置箱子。
+- 默认/正式配置启用Invero，island-menu指向空岛菜单；main-menu空字符串表示保留无岛创建流程。配置解析支持中文菜单ID并拒绝路径/扩展名/空岛ID留空；桥接对空main-menu直接保留内置创建页。业务功能子菜单、现有Invero按钮和贴图不变。
+- 安装Invero1.4.17及其实际cache依赖javap确认PlatformFactory.getAPI(String)、InveroAPI.getMenuManager、InveroMenuManager.getMenu(String,boolean)、Menu.open(Player,Map)。未更改这些API调用。
+- Maven InveroMenuConfigTest/ HomeMenuConfigTest/ HomeFlightSettingsTest共18测试通过，package成功；正式配置YAML解析并解析到与/ismenu相同的5行布局菜单通过（当前正式菜单未显式配置rows/virtual，保留现有设置）。既有shade重复manifest/module-info警告保留。
+- 正式同名JAR和invero.yml已备份部署；14337560字节，SHA-256=2118E915EE8BB29DB330651598C3329B123E45B70AFF0E2AFA000049281F2336，目标与构建产物一致；未打包Paper/Bukkit API/测试源码。
+- 备份plugins/DreamSkyblock/backups/invero-unified-entry-20261106-111004；部署报告target/verification/diagnostics/invero-route-deployment.json。未自动重启/重载，实际玩家命令→Invero打开及子菜单返回流程仍待重启后验收。
+
+## 2026-11-06 2.6生图模型与信息右键回岛
+
+- 本地Infinite Canvas在Edge中将XToken两个模型由2.5改为gpt-image-2.6-flare/sunburst，默认生图设为2.6-flare；画布重载后工具回读current/model列表确认，使用2.6-flare实际生成服务器V4成功。
+- 用户改选空岛V2，弃用V3中央双按钮；服务器V4保留中间三条竖排，任务改左上独立小方块。生成图已下载、目视检查并最近邻导出176×108不透明RGB和4倍预览，见output/imagegen/teleport-menu-preview/v4-export.json。新传送按钮命令未给，贴图和新热区未部署，避免出现无效入口。
+- 独立完成空岛信息右键回岛：仅I.action.right及两条Lore提示变化，右键脚本与原T.action.left逐字相同，左键与其他条目保留；正式和项目workspace SHA256=5bbfa2c823c7b1e8e974f3819bf3787dbcbf6f36777d9f13dcfbe8f2e34e77e1一致，备份路径见target/verification/diagnostics/info-right-click.json。
+- 安装Invero1.4.17实际PatchedLoader YAML→JSON、命令绑定/点击action codec、Kether解析通过：两菜单、11组action、12条脚本（含新增right）；未执行真实玩家点击、完整BaseMenu或游戏渲染。既有Reflex Unsafe弃用警告保留。
+- 本轮无DreamSkyblock Kotlin/资源JAR变化，不运行Maven；未自动重启/重载服务器。实际菜单右键行为和新增贴图业务均待验证/补齐命令。
+
+## 2026-11-06 新增传送空壳菜单并部署双菜单
+
+- 用户答复：新增Invero传送.yml，不需要功能。新增三行箱子，仅边框和装饰指南针，无action、传送命令、地点或bindings；两个主菜单P按钮只用menu open '传送'打开该菜单。
+- 安装版Invero1.4.17 ActionMenu字节码确认open子动作；真实PatchedLoader YAML→JSON、绑定/点击codec和Kether解析通过：3菜单、13组action、14脚本。无完整BaseMenu/玩家运行；既有Unsafe弃用警告保留。
+- 主菜单点击区左上Q任务、中间P传送/I家园/K市场；空岛保留原顶部W/I、中央改P传送、服务Q/C/S、底部K市场/T回岛；既有条目、绑定、信息I右键回岛均逐项相等，空壳无action已检查。
+- 两张原生176×108不透明RGB贴图、3份YAML备份后同步正式与项目镜像，逐文件SHA-256回读一致。备份plugins/DreamSkyblock/backups/teleport-menus-20261106-134514；完整清单target/verification/diagnostics/teleport-menus-deployment.json。
+- 贴图使用已选生成图的最近邻原生尺寸导出，生成字样原生细节和热区边缘手感待客户端确认。未自动重载Invero、重新生成/加载CE资源包或重启服务器；本轮仅菜单/贴图，不构建DreamSkyblock JAR。
+
+## 用户选定截图恢复（V7）
+- V6遭用户否决；用户指定9cd63784/73ed29e5两张旧截图。恢复server-menu-solid-background与opaque-menus/island-menu原生176×108 RGB，不重新生成整图；仅改中央传送字样和主菜单左上任务小块，保留原标题/家园/市场/服务文字与边框底板。
+- 源及预览output/imagegen/menu-favorite-v7；prepare脚本同步。I右键回岛保留，无T重复入口，普通副本/石址未变。真实Invero解析4菜单15动作16脚本通过，8目标备份原子同步和SHA256一致，详见target/verification/diagnostics/menu-favorite-v7-deployment.json。
+- 未自动重载或重建CE包，无Kotlin/JAR变更；新局部修订尚未用户认可/游戏验收。截图风格获认可与修改后成品获认可分别记录。
+
+## V8 原生像素贴图部署
+用户确认注意像素大小并实施。运行PNG为176×108 RGB不透明，704×432仅最近邻预览，未将生成大图当作运行贴图。两处传送补正原生12px二值字形；native-validation.json检查文字框外像素不变。素材output/imagegen/menu-regenerated-v8。任务热区移到首行第二格，其余动作/绑定与传送副本文件保留。Invero1.4.17真实解析4菜单15动作16脚本通过；8目标已备份原子同步并SHA256一致，清单target/verification/diagnostics/menu-regenerated-v8-deployment.json。本轮无JAR修改，不构建，不自动重载/重建CE包，实际客户端显示与点击验收待完成。
+
+## V9 文字间距与残影修复
+用户实服截图反馈字挤和奇怪阴影。原生176×108标题12px/正文10px，每字1px额外间隔；13标签使用二值字形，不绘制文字阴影，清理字框残影；脚本验证框外像素变化0。预览已目视检查。4张正式/项目PNG备份后原子替换、SHA256一致；4份菜单字节不变，不新增脚本/动作，不需重新执行Invero解析。报告target/verification/diagnostics/menu-type-v9-deployment.json。未自动重载/生成推送CE包，实际游戏渲染待确认。
+
+## Xerr 12px字体替换（V10）
+用户否决V9字体，授权Xerr生成包字体。核对quest_ui_position_light.json和legacy/quest_ui_255_plain.json指向fusion_pixel_quest_12_sc.ttf，size12/oversample1。运行图13标签原生12px，不缩字形，不额外字距，无文字阴影；框外像素差0，176×108RGB，4倍预览目视检查。4目标备份原子部署hash一致，4菜单字节保持，报告target/verification/diagnostics/menu-xerr-v10-deployment.json。未修改Xerr字体配置和HUD，不重载服务器/重建CE包。客户端验收待完成。
+
+## 传送及普通副本四行小卡片
+用户要求两页至少4×9且为后续分类/副本留位置。最终两页均176×90RGB，左上54×44卡片，右侧留白；普通副本卡片进入子菜单，石址卡片执行原dungeon enter lost_altar，信息在Lore，左下返回。CE独立teleport-menus.yml使用新glyph E913/E914、height90、ascent13；图标/原生Xerr12px标签经4倍最近邻目视检查。实际Invero解析4菜单16组动作17脚本通过（日志invero-dungeon-skins.log），无完整BaseMenu/客户端运行。10目标备份原子同步及SHA256一致，原两主页菜单字节保持；报告target/verification/diagnostics/dungeon-skins-deployment.json。未自动重载或生成/推送CE资源包，游戏验收待完成；无DreamSkyblock代码/JAR变更、不构建。
+
+## 六卡片位与备用菜单
+传送/普通副本调整5×9/176×108RGB，3×2六个52×30小卡位，原生Xerr12px，仅首卡业务，其他五个空白无动作，返回在底部。新版导出export-six-cards.py及准备脚本同步。实际解析4菜单16动作17脚本通过，10目标备份原子同步hash一致，报告dungeon-skins-deployment.json。
+备用菜单新增4×9/176×90RGB，用户确认主城按钮先无命令（无action），大厅dungeon lobby、家园复用原主页动作。实际解析1菜单2动作2脚本通过，6目标备份同步hash一致，4原菜单不变，报告backup-menu-deployment.json。新图像CE配置独立；未重建/推送CE包或重载/重启，客户端验收待完成。
+
+## 备用菜单标题与按钮缩小
+文件备用菜单.yml不改名，贴图显示标题服务器菜单。按钮70×16/图标10×10，Xerr12px字形，176×90RGB四行。原动作/配置布局保持（主城未绑定、大厅dungeon lobby、家园复用主页）。目视检查原生四倍最近邻预览；实际解析1菜单2动作2脚本通过，6目标备份同步SHA256一致，其他4菜单不变。backup-menu-deployment.json有清单。未重载或重建CE包，客户端验收待完成。
+
+## 移除预留位空框
+用户澄清六位置仅为空间预留，不应显示空方框。两页只保留左上真实卡片，其他5处恢复背景；原卡片、图标、标题、坐标、字体、176×108五行及返回保持。导出与目视检查通过；4PNG备份原子同步hash一致；5份正式和项目菜单YAML hash全部保持，因此不重跑未变的Invero解析。报告target/verification/diagnostics/no-empty-frames-deployment.json。未自动重载或重建CE包，客户端效果待应用后确认。
+
+## 2026-11-09 空岛右上角设置齿轮
+用户确认预览后，176×108 RGB 贴图同步项目与正式 CraftEngine 包。仅14×14区域变化，2目标备份与SHA256回读通过，全部Invero YAML未改；prepare.py引用新版本。报告 target/verification/diagnostics/island-settings-deployment.json。标题区无原版物品槽，当前齿轮只显示，可点击布局待用户选择。未构建JAR（无代码变更）、未生成/推送资源包、未游戏验证。
+
+## 2026-11-09 空岛设置可点击版
+用户允许齿轮下移到首行最右slot8，layout首行WWWW IIIG，信息按钮缩短保留左右键。G执行已核对HomeCommand.kt的dreamskyblock:home settings。原生176×108 RGB，仅93..166/19..39局部变化，14×14齿轮完全位于第九格；已目视检查4倍最近邻预览。Invero1.4.17真实YAML→JSON/动作codec/Kether通过1菜单9动作10脚本；现有Unsafe警告与本次无关。两贴图与两菜单备份部署SHA256通过，报告target/verification/diagnostics/island-settings-clickable-deployment.json。未改插件代码、不构建JAR；未重载或生成/推送资源包，未游戏验收。
+
+## 2026-11-09 游戏设置语义与信息图标修正
+用户纠正齿轮为游戏设置，不是空岛规则。新增独立Invero游戏设置.yml，genlite holograms玩家动作与返回空岛入口；G改为menu open游戏设置。Genlite-1.0.0.jar存在，plugin.yml声明genlite.use默认true。信息按钮恢复12×12草方块、原生12px文字，首行WWWWIIIIG，I原左右键保持；局部区域外像素不变、原生和最近邻4倍已目视检查。真实Invero1.4.17加载/动作codec/Kether通过2菜单11动作12脚本；6目标备份原子同步SHA256一致，报告target/verification/diagnostics/game-settings-fix-deployment.json。未修改JAR、不构建；未重载Invero、生成推送资源包、游戏点击或Genlite命令实测。
+
+## 2026-11-09 游戏设置任务信息追踪计分板开关
+游戏设置第二行改为H/Q左右两个开关，Q玩家执行用户指定quest hud toggle；H和B动作语义深比较保持。实际Invero1.4.17 YAML→JSON/动作codec/Kether通过1菜单3动作3脚本。正式workspace、项目镜像、暂存源3文件备份原子同步SHA256通过。报告target/verification/diagnostics/quest-hud-toggle-deployment.json。未自动重载、未游戏执行命令；无贴图或代码变更，无需资源包或JAR构建。
+
+2026-11-09 游戏设置像素版已部署：复用用户指定 Quest 备份原卡与木框，5×9、底板176×108、卡片40×73；仅绘制全息显示、任务追踪，其他位置留白。两按钮仍由玩家执行 genlite holograms / quest hud toggle。前者是当前空岛共享设置，后者是个人任务HUD。每10 tick在玩家EntityScheduler读取真实缓存，状态变化才更新标题；未就绪显示灰色横线，关闭/离线/会话替换取消任务。Quest1.0.0私有runtime/preferences字段耦合已通过安装JAR签名检查，升级需重验。正式与项目镜像20目标已备份原子同步、SHA256回读一致。制作/部署入口 integrations/craftengine/invero-menus/game-settings/；当前导出 output/imagegen/game-settings-release/，旧game-settings-fix部署脚本停用，避免恢复旧菜单。
+
+验证：安装Invero1.4.17真实YAML→JSON、动作/节点codec、Kether解析、Nashorn编译通过（1菜单3动作2节点3脚本）；post_open/close真实事件codec通过；Nashorn配测试替身验证ON/OFF/unknown、异步状态刷新、不重复发标题、错误限次日志和任务取消。7张PNG与配置引用已核对，mixed原生最近邻预览已目视检查。报告 target/verification/diagnostics/game-settings-pixel-deployment.json。仅配置和贴图更新，未修改/构建JAR；未重启、未执行在线重载、未生成或推送CE资源包、未游戏客户端验证。需执行 menu reload、ce reload pack 并接受最新资源包；物品最终斜体状态和实际热区仍待游戏验证。
+
+2026-11-09 开关灰色横线修正：实服截图确认底板和unknown卡已加载。安装Invero的HandlerKt.updateTitle在isTitleUpdating为true时直接返回；初始菜单打开会锁两tick，旧脚本首tick更新却提前写Settings__State，存在丢失首次状态包且不重试的问题。刷新首延迟改为4tick，并在标题锁定期间跳过且不提交状态；setTitle成功返回后才记状态，下一轮补发。保留原贴图与两个命令。增加真实YAML解码后脚本源一致性检查、Nashorn初次/后续标题锁的延后补发回归；安装Invero解析和脚本测试通过。20个live/project目标备份、SHA256校验同步完成，manifest为target/verification/diagnostics/game-settings-pixel-deployment.json。本轮未在线重载、未客户端复测，仍待重新打开菜单确认；贴图未改，无需重建CE资源包。 
+
+2026-11-09 Xerr字体统一已同步leaf与项目镜像：标题/卡片保持原生12px Xerr字体，返回文字改为同一字体直接绘制，取消旧返回牌字形缩放；仅底板footer像素变化，六张状态卡与旧版逐像素相同。7张PNG格式/尺寸与变化范围检查通过，14个目标备份同步SHA256一致。清单target/verification/diagnostics/game-settings-font-deployment.json。已目视检查mixed-4x.png；未重建推送资源包、未游戏验证。
+
+2026-11-09 副本大厅服务器菜单补传送：备用菜单.yml扩为5×9/176×108，四个70×16按钮按传送→主城→副本大厅→家园排列；P执行menu open 传送，S/D/H条目与部署前逐项一致，主城仍无命令。其他四个菜单字节保持。真实Invero解析1菜单3动作3脚本通过，6个正式/项目目标备份原子部署SHA256一致，清单target/verification/diagnostics/backup-menu-teleport-deployment.json。像素预览已目视检查；未在线重载或生成推送资源包，客户端待确认。需menu reload、ce reload pack并接受最新资源包。
+
+2026-11-09 当前有效版本：服务器菜单改为2×2，5×9/176×108RGB，卡片62×34（为槽位和文字边界从草案64×36微调），奶油底细棕边、绿色细线点缀。图标上/名称下：末影珍珠传送、指南针主城、遗迹大厅、草方块家园。Xerr原生12px字形，无文字缩放或阴影。热区PPPP SSSS两行/空一行/DDDD HHHH两行；三个原入口内容和传送命令保持。真实Invero加载codec/Kether1菜单3动作3脚本通过，预览目视检查并修正文字与底边相交，6正式/镜像目标备份同步SHA256一致，其他四菜单字节保持。清单target/verification/diagnostics/backup-menu-grid-deployment.json。旧纵向图/脚本保存在preview-vertical-history.png与export-vertical-history.py。未在线重载或生成推送资源包、未游戏验证，需menu reload与ce reload pack并接受最新资源包。
+
+2026-11-09 用户指定主城命令warp spawn：备用菜单S左键先menu close，再playerPerform warp spawn，Lore更新返回服务器主城。prepare-backup-menu.mjs默认命令同步。2×2布局、贴图及其他条目保持；安装Invero真实解析1菜单4动作4脚本通过，两份workspace备份原子同步SHA256一致，清单target/verification/diagnostics/backup-spawn-deployment.json。未执行游戏内传送、未在线重载；无需重建资源包。
+
+2026-11-09 用户确认卷轴单格按钮移左下并落地：按钮14×14、坐标(12,90)，完整位于slot36，J条目打开独立五行空玩法.yml。空菜单全AIR、不加虚构玩法或返回业务按钮。保留所有原条目，仅末行layout改J  KKK三个尾空格。正式与项目2PNG/4YAML共6目标备份原子同步SHA256一致，部署清单target/verification/diagnostics/gameplay-entry-deployment.json；prepare.py同步最终图和布局，避免重建回退。真实Invero1.4.17解析2菜单10动作11脚本通过，PNG176×108RGB、仅左下14×14变化、已目视检查。未执行在线重载、CE生成推送资源包或Minecraft客户端验证；需menu reload、ce reload pack并接受最新资源包。
+
+2026-11-09 卷轴上移微调：按用户截图将(12,90)上移2px到(12,88)，尺寸14px不变，两张正式/项目贴图备份同步SHA256一致。变化范围限左下14×16（含旧位置清除）；菜单及动作未改，不重新构建JAR。已目视检查，实际客户端待应用CE资源包确认。顶端2px装饰边跨槽36上边界，图标主要可点区域保持槽36；未扩张任务按钮热区。清单target/verification/diagnostics/gameplay-offset-deployment.json。
+
+## 2026-11-10 Dungeon 常驻副本重生协作
+
+HomeRespawn 在死亡和重生时识别 Dungeon 的 `dungeon:permanent_death_spawn` 字符串 PDC 记录，跳过回岛会话并释放旧预约。Dungeon 同时改为在重生 MONITOR 阶段消费记录，避免 HIGHEST 注册顺序冲突。两边需同步更新。
+
+本次 Maven package 成功，104 项测试通过。Dungeon 的 Leaf26.3 隔离服探针通过真实新 JAR 反射调用 HomeRespawn 两个处理器，验证有标记死亡不进入回岛准备；该探针未运行整个空岛插件与数据库。正式 plugins 和 plugins/update 已备份部署，SHA256一致；正式服务器尚未重启，玩家联测待确认。
+
+## 2026-11-11 队伍中央仓库名称
+
+新增只读 API findHomeOwnerName(UUID)，返回内存 Home.ownerName 持久化创建者名称，不做磁盘或网络查询。HomeView 构造契约未改。Maven test package 成功：104项，1项已有 native archive 测试跳过；javap 确认接口存在。与正式 JAR 对比只有接口、实现及同源文件行号变化的 HomeView/HomePoint class 不同。正式 JAR 被运行中的 JVM 占用，备份后暂存 plugins/update，与 PlayerVault 配套下次启动生效；未重启、未实服验证。备份 leaf/.codex-backups/warehouse-owner-name-20261111-162827。
+
+## 2026-11-12 服务器菜单视觉统一
+- 范围仅备用菜单的项目/leaf两份backup-menu.png；5行2×2四入口、全部命令和YAML保持原样。
+- 原生176×108 RGB、按钮70×27、原生Xerr12px，4倍最近邻预览已目视检查；按钮保持在原物品槽热区内。
+- Node YAML检查现有5×9布局/4入口和CE glyph height108/ascent13/纹理引用通过。部署脚本校验其他workspace YAML和菜单PNG未变；2目标原子替换SHA256一致。清单：target/verification/diagnostics/server-menu-style-deployment.json。
+- 未运行Maven（无代码改动）；未在线重载、未生成推送资源包、未Minecraft客户端验收。需ce reload pack及客户端接受新包。
+
+## 2026-11-12 服务器菜单布局跟随主菜单
+- 用户纠正2×2布局，已按正式主菜单server-menu.png改为中轴紧凑纵排；四按钮74×16，原生176×108 RGB/Xerr12px。预览已目视检查。
+- 仅变更备用菜单layout和对应PNG；深比较确保全部items、命令与其余字段保持。真实Invero1.4.17加载/动作codec/Kether解析通过：1菜单4动作4脚本。
+- 几何检查每个按钮完整落在对应槽热区；四目标备份原子同步SHA256一致，其他正式YAML/PNG哈希保持。见target/verification/diagnostics/server-menu-layout-deployment.json。
+- 无Java/Kotlin变更，不执行Maven。未在线重载/重建推送资源包/游戏验收。
+
+## 2026-11-12 游戏设置玩家文案清理
+删除H/Q按钮关于灰色横线尚未就绪的技术说明，以及任务按钮设置保存后自动同步的说明；保留实际功能、共享设置说明与点击提示。以最新leaf配置重基，项目镜像和staged同步；准备脚本清除同类文案避免重新生成。YAML解析及深比较通过，仅正式H/Q Lore改变，动作/节点/事件保持；三目标备份原子更新SHA256一致。清单target/verification/diagnostics/settings-copy-cleanup.json。纯文案变更，未构建、未游戏验证；Invero自动载入或menu reload生效，无需重建资源包。
+
+## 2026-11-13 云端副本大厅UI缺失
+- 直接SSH核对D:/Purpur-server：备用菜单标题E915存在，菜单布局/命令完整；CraftEngine缺configuration/backup-menu.yml与textures/gui/backup-menu.png。generated及hosted两个ZIP均无E915 provider，E914普通副本资源完整，确认是大厅服务器菜单缺资产。
+- 已补传且校验两文件SHA256；云端菜单SHA256保持7EFA7AA288403BC0AE859AAC49E7DFE08ACCA02BF66DEF01A6EB111A7FEA70CC。配置height108/ascent13/E915与菜单引用及176×108贴图匹配，预览已目视检查。
+- 记录target/verification/diagnostics/cloud-ui/restore-report.json；云端manifest D:/Purpur-deploy-backups/backup-menu-ui-20261113-153208/manifest.json。原目标均不存在，无旧资源覆盖。
+- 未重启/热加载/执行reload；需ce reload pack重建并推送，客户端接受新包后验收。无业务代码/JAR变更，不运行Maven。
+
+## 2026-11-20 Canvas 适配进度
+
+- Canvas 26.3 build 944 本地 API 签名核对通过。异步卸载结果接入空岛维护与旧存档迁移，存档事务等待卸载结果。部分传送和内置菜单点击改由玩家实体调度器执行。
+- Maven test 统计 104 项，0 失败、0 错误、1 跳过。日志见 target/verification/logs/canvas-port-preparation.log。
+- 初始平台写入、首次存档以及其他玩家生命周期调度仍待迁移。未在 Canvas 26.3-1001 运行，保留原启动限制，未打包部署。
+
+## 2026-11-20 Canvas 26.3 适配
+
+- 启用 Folia 加载声明。区域线程核心须提供 Canvas 异步世界卸载接口。Canvas 按区块生成初始平台，首次卸载保存后验证存档并提交创建标记，再重新加载。Paper 保留同步保存路径。
+- Maven package 成功，104 项测试中 103 项通过、1 项跳过。JAR 已核实声明 folia-supported: true，未包含 Bukkit、Paper 或 Canvas API。
+- 相同 JAR 在隔离 Canvas 26.3-944 和 Purpur 26.2-2633 启用，完成创建、首次保存、重开读草方块、维护卸载。探针使用代理玩家，未验证真实玩家登录、回岛或 GUI 点击。Canvas 26.3-1001 下载未完成，未实测该构建。
+- 日志见 target/verification/logs/canvas-port-final.log、canvas-944-final-runtime.log、canvas-port-purpur-final.log。构建 SHA-256 为 63185775a7d8a80499a1ebeebc11c8a4ece87876b1de903b527e6d03c99c4388。
+- 本地 leaf 旧 JAR 锁定，新 JAR 待更新。云端 Purpur 已校验并暂存 plugins/update/DreamSkyblock-1.0-SNAPSHOT.jar，备份 D:/Purpur-deploy-backups/ad37358b954f4c02ac73576ba423c030。未重启正式实例。

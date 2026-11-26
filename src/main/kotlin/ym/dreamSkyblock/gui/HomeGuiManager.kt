@@ -56,7 +56,7 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
     fun open(player: Player, request: MenuRequest) {
         if (!allowed(player)) return
         val home = homes.byPlayer(player.uniqueId)
-        if (request.menu in setOf(HomeMenu.ISLAND, HomeMenu.MEMBERS, HomeMenu.PLAYERS, HomeMenu.MEMBER_CONFIRM) && home == null) {
+        if (request.menu in setOf(HomeMenu.ISLAND, HomeMenu.MANAGEMENT, HomeMenu.MEMBERS, HomeMenu.PLAYERS, HomeMenu.MEMBER_CONFIRM) && home == null) {
             messages.send(player, "home.none"); openMain(player); return
         }
         if (request.menu == HomeMenu.CONFIRM && (home != null || request.template !in config.creationTemplates)) { openMain(player); return }
@@ -83,11 +83,11 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
 
     private fun tutorialOpened(player: Player, request: MenuRequest) {
         if(request.menu != HomeMenu.ISLAND) return
-        plugin.server.scheduler.runTask(plugin,Runnable {
-            if(!plugin.isEnabled || !player.isOnline || !viewing(player)) return@Runnable
-            val home=homes.byPlayer(player.uniqueId) ?: return@Runnable
+        player.scheduler.run(plugin, {
+            if (!plugin.isEnabled || !player.isOnline || !viewing(player)) return@run
+            val home = homes.byPlayer(player.uniqueId) ?: return@run
             plugin.server.pluginManager.callEvent(ym.dreamSkyblock.api.HomeMenuOpenedEvent(home.id,player.uniqueId,request.menu.name))
-        })
+        }, null)
     }
 
     fun click(event: InventoryClickEvent) {
@@ -99,10 +99,10 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
         val action = holder.actions[event.rawSlot]?.takeIf(String::isNotBlank) ?: return
         val revision = holder.revision
         // Paper documents that inventory transitions must occur after the click event.
-        plugin.server.globalRegionScheduler.execute(plugin) {
-            if (!current(player, inventory, holder) || holder.revision != revision || !allowed(player)) return@execute
+        player.scheduler.run(plugin, {
+            if (!current(player, inventory, holder) || holder.revision != revision || !allowed(player)) return@run
             dispatch(player, inventory, holder, action)
-        }
+        }, null)
     }
 
     fun drag(event: InventoryDragEvent) {
@@ -148,7 +148,8 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
                 if (!player.performCommand("genlite:genlite warehouse")) messages.send(player, "gui.warehouse-unavailable")
             }
             action == "holograms" -> {
-                if (request.menu != HomeMenu.ISLAND || homes.byPlayer(player.uniqueId) == null) return
+                if (request.menu != HomeMenu.HELP) return
+                if (homes.byPlayer(player.uniqueId) == null) { messages.send(player, "home.none"); return }
                 if (!plugin.server.pluginManager.isPluginEnabled("Genlite")) {
                     messages.send(player, "gui.unavailable")
                     return
@@ -192,7 +193,7 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
         if (!allowed(player) || homes.byPlayer(player.uniqueId)?.id != homeId) return
         val allowedComponents = when (menu) {
             HomeMenu.MAIN -> setOf("create", "join", "help", "close")
-            HomeMenu.ISLAND -> setOf("members", "settings", "help", "upgrade", "teleport", "spawn", "warehouse", "close")
+            HomeMenu.ISLAND -> setOf("info", "members", "settings", "help", "upgrade", "teleport", "spawn", "warehouse", "close")
             else -> return
         }
         if (component !in allowedComponents || (menu == HomeMenu.MAIN) != (homeId == null)) return
@@ -209,6 +210,10 @@ class HomeGuiManager(private val plugin: DreamSkyblock, private val config: Conf
     fun closeAll() {
         invero.closeAll()
         arc?.closeAll()
-        plugin.server.onlinePlayers.filter { it.openInventory.topInventory.holder is HomeMenuHolder }.forEach(Player::closeInventory)
+        plugin.server.onlinePlayers.forEach { player ->
+            val close = Runnable { if (player.openInventory.topInventory.holder is HomeMenuHolder) player.closeInventory() }
+            if (org.bukkit.Bukkit.isOwnedByCurrentRegion(player)) close.run()
+            else if (plugin.isEnabled) player.scheduler.execute(plugin, close, null, 1L)
+        }
     }
 }

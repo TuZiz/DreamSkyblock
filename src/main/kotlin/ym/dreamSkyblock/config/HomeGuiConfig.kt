@@ -11,7 +11,7 @@ import java.io.File
 class HomeGuiConfig(private val plugin: DreamSkyblock) {
     fun load(): Map<HomeMenu, YamlConfiguration> {
         HomeSettingsMigration.migrate(plugin.dataFolder.toPath(), ::defaults)
-        return HomeMenu.entries.associateWith { menu ->
+        val menus = HomeMenu.entries.associateWith { menu ->
             val file = "gui/${menu.file}.yml"
             val path = File(plugin.dataFolder, file)
             if (!path.exists()) plugin.saveResource(file, false)
@@ -20,6 +20,10 @@ class HomeGuiConfig(private val plugin: DreamSkyblock) {
                 validate(file, yaml)
             }
         }
+        HomeInformationMigration.apply(menus, defaults(HomeMenu.HELP))
+        HomeManagementMigration.apply(menus.getValue(HomeMenu.ISLAND), menus.getValue(HomeMenu.MANAGEMENT), defaults(HomeMenu.MANAGEMENT))
+        menus.forEach { (menu, yaml) -> validate("gui/${menu.file}.yml", yaml) }
+        return menus
     }
 
     private fun defaults(menu: HomeMenu) = YamlConfiguration().apply {
@@ -110,6 +114,9 @@ class HomeGuiConfig(private val plugin: DreamSkyblock) {
                 val symbol = section.getString("symbol")?.singleOrNull() ?: error("$file: $path.symbol 必须为单个字符")
                 require(symbol != ' ' && symbols.add(symbol)) { "$file: $path.symbol 重复或为空格: $symbol" }
                 require(Material.matchMaterial(section.getString("material", "")!!) != null) { "$file: $path.material 无效" }
+                section.getString("item-model")?.let {
+                    require(org.bukkit.NamespacedKey.fromString(it) != null) { "$file: $path.item-model 无效: $it" }
+                }
                 require(section.isString("name")) { "$file: $path.name 缺失" }
                 val repeat = section.getString("repeat")
                 require(repeat == null || repeat in setOf("invites", "members", "players")) { "$file: $path.repeat 无效: $repeat" }

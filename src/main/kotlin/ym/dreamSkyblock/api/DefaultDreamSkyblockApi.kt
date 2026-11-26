@@ -13,6 +13,7 @@ import ym.dreamSkyblock.value.HomeValueService
 class DefaultDreamSkyblockApi(private val homes: HomeManager, private val values: HomeValueService) : DreamSkyblockApi {
     override fun isReady() = homes.ready
     override fun findHome(homeId: UUID): HomeView? = if (isReady()) homes.byId(homeId)?.let(::view) else null
+    override fun findHomeOwnerName(homeId: UUID): String? = if (isReady()) homes.byId(homeId)?.ownerName else null
     override fun findHomeByMember(playerId: UUID): HomeView? = if (isReady()) homes.byPlayer(playerId)?.let(::view) else null
     override fun allHomes(): List<HomeView> = if (isReady()) Collections.unmodifiableList(homes.all().map(::view)) else emptyList()
     override fun isMember(homeId: UUID, playerId: UUID) = findHome(homeId)?.members?.contains(playerId) == true

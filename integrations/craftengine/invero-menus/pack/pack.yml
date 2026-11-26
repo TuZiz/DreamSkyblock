@@ -1,0 +1,6 @@
+schema-version: 1
+name: 'Invero 像素菜单'
+author: 'DreamSkyblock'
+version: '1.0.0'
+description: '服务器主菜单与我的空岛，原版箱子像素比例'
+namespace: dreamskyblock_menus

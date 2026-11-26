@@ -6,7 +6,7 @@ import org.bukkit.inventory.InventoryHolder
 import java.util.UUID
 
 enum class HomeMenu(val file: String) {
-    MAIN("main"), ISLAND("island"), CONFIRM("create_confirm"),
+    MAIN("main"), ISLAND("island"), MANAGEMENT("management"), CONFIRM("create_confirm"),
     INVITES("invites"), MEMBERS("members"), PLAYERS("invite_players"), MEMBER_CONFIRM("member_confirm"),
     SETTINGS("settings"), WORLD_RULES("world_rules"), VISITOR_PERMISSIONS("visitor_permissions"), HELP("help")
 }

@@ -1,0 +1,15 @@
+# 五行箱子上半区；两张素材与独立菜单一一对应。
+'schema-version': 1
+'images':
+  'dreamskyblock_menus:teleport_menu':
+    'height': 108
+    'ascent': 13
+    'font': 'dreamskyblock_menus:menus'
+    'file': 'dreamskyblock_menus:gui/teleport-menu.png'
+    'char': ''
+  'dreamskyblock_menus:dungeon_menu':
+    'height': 108
+    'ascent': 13
+    'font': 'dreamskyblock_menus:menus'
+    'file': 'dreamskyblock_menus:gui/dungeon-menu.png'
+    'char': ''

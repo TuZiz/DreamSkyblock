@@ -44,7 +44,7 @@
 
 ## 平台与原生存储
 
-支持普通主线程模型的 Paper / Purpur / Leaf 26.2；不声明 Folia 兼容，不使用 Canvas / Arbor 专用卸载接口。实测 Purpur 26.2 build 2633、Leaf 26.2 build 124、Zulu JDK 25.0.2。Leaf build 124 为实验构建，验证范围见 [VALIDATION.md](VALIDATION.md)。
+支持 Paper / Purpur / Leaf 26.2 主线程模型及提供异步世界卸载接口的 Canvas 26.3。Java 25 下已验证 Purpur build 2633、Canvas build 944 的空岛创建、保存、重开和卸载。缺少该接口的区域线程核心会在启动时拒绝启用插件。不同构建和游戏内操作的验证范围见 [VALIDATION.md](VALIDATION.md)。
 
 每个家园有独立 UUID `home_id`，成员按玩家 UUID 关联，名称仅用于显示。世界 Key 为 `dreamskyblock:dreamskyblock_<home_id去横杠>`，通过 Paper `WorldCreator.ofKey` 按需加载。
 
@@ -138,11 +138,11 @@ if (api?.isReady() == true) {
 
 ### 独立 Invero 空岛菜单（1.4.17）
 
-仅将 `integrations/invero/dreamskyblock-island.yml` 复制到 Invero workspace；不绑定命令，不接管任何内置菜单。使用 Invero 自身菜单跳转或管理入口打开 `dreamskyblock-island`。内置有岛和无岛主页、`/home`、`/is gui` 等行为保持原样。
+有岛玩家的 `/home gui`、`/is gui` 与 `/ismenu` 统一打开现有 Invero `空岛菜单.yml` 像素菜单。`invero.yml` 设置 `enabled: true`、`island-menu: '空岛菜单'`；`main-menu: ''` 保留无岛玩家的内置创建流程。成员、设置和帮助等功能子菜单继续由 DreamSkyblock 提供。旧 `integrations/invero/dreamskyblock-island.yml` 仅为历史模板，当前工作区使用 `integrations/craftengine/invero-menus/workspace/空岛菜单.yml`，无需再安装第二份。
 
 动态信息使用本插件已有 PlaceholderAPI 变量（需启用 PlaceholderAPI），无需插件注入会话上下文。按钮仅调用既有功能；升级按钮保留说明，没有升级子菜单。成员入口补充 `/is members`（`/家 成员`），另有 `/is invites`、`/is rules`、`/is permissions` 的直接入口。
 
-没有新增 `/is invero` 或 `/家 外部菜单`。DreamSkyblock 的 Invero 接管配置保持关闭。更新 JAR 后在维护窗口重启加载新增成员等入口；未自动重启服务器。
+没有新增打开指令。菜单 ID 支持中文文件名，Invero 不可用或指定菜单缺失时保留原有内置菜单回退并记录日志。已有配置需同步上述路由；更新 JAR 后重启加载，未自动重启服务器。
 
 ### 登录与默认重生
 

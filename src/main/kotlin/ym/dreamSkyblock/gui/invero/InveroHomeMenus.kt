@@ -6,9 +6,9 @@ import ym.dreamSkyblock.config.ConfigService
 import ym.dreamSkyblock.gui.HomeMenu
 import java.util.logging.Level
 
-/** Paper player/main thread. Optional Invero 1.4.14 API, resolved using its owning plugin loader. */
+/** Paper player/main thread. Invero 1.4.17 API, resolved using its owning plugin loader. */
 class InveroHomeMenus(private val plugin: DreamSkyblock, private val config: ConfigService) {
-    private val managedIds = mutableSetOf<String>()
+    private val managedIds = java.util.concurrent.ConcurrentHashMap.newKeySet<String>()
     private fun loader(): ClassLoader? = plugin.server.pluginManager.getPlugin("Invero")
         ?.takeIf { it.isEnabled }?.javaClass?.classLoader
 
@@ -21,7 +21,7 @@ class InveroHomeMenus(private val plugin: DreamSkyblock, private val config: Con
     private fun menuId(menu: HomeMenu): String = if (menu == HomeMenu.MAIN) config.inveroMenus.mainMenu else config.inveroMenus.islandMenu
 
     fun open(player: Player, menu: HomeMenu, values: Map<String, String>): Boolean {
-        if (!config.inveroMenus.enabled) return false
+        if (!config.inveroMenus.enabled || menuId(menu).isEmpty()) return false
         val loader = loader() ?: return false
         return try {
             val manager = manager(loader)
@@ -42,7 +42,7 @@ class InveroHomeMenus(private val plugin: DreamSkyblock, private val config: Con
         }
     }
 
-    private fun sessionMenu(player: Player): Any? {
+    private fun sessionMenu(player: Player, ids: Set<String> = managedIds): Any? {
         val loader = loader() ?: return null
         val viewerType = loader.loadClass("cc.trixey.invero.ui.bukkit.PlayerViewer")
         val viewer = viewerType.getConstructor(Player::class.java).newInstance(player)
@@ -51,7 +51,7 @@ class InveroHomeMenus(private val plugin: DreamSkyblock, private val config: Con
         val session = companion.javaClass.getMethod("getSession", viewerType).invoke(companion, viewer) ?: return null
         val menu = sessionType.getMethod("getMenu").invoke(session)
         val id = menu.javaClass.getMethod("getId").invoke(menu)
-        return menu.takeIf { id in managedIds || id == config.inveroMenus.mainMenu || id == config.inveroMenus.islandMenu }
+        return menu.takeIf { id in ids || id == config.inveroMenus.mainMenu || id == config.inveroMenus.islandMenu }
     }
 
     fun viewing(player: Player): Boolean = runCatching { sessionMenu(player) != null }.getOrElse {
@@ -59,13 +59,18 @@ class InveroHomeMenus(private val plugin: DreamSkyblock, private val config: Con
     }
 
     fun closeAll() {
+        val ids = managedIds.toSet()
         plugin.server.onlinePlayers.forEach { player ->
-            try {
-                val menu = sessionMenu(player) ?: return@forEach
+            val close = Runnable {
+              try {
+                val menu = sessionMenu(player, ids) ?: return@Runnable
                 loader()!!.loadClass("cc.trixey.invero.common.Menu")
                     .getMethod("close", Player::class.java, Boolean::class.javaPrimitiveType, Boolean::class.javaPrimitiveType)
                     .invoke(menu, player, false, false)
-            } catch (error: Exception) { plugin.logger.log(Level.WARNING, "Invero 主菜单关闭失败: player=${player.uniqueId}", error) }
+              } catch (error: Exception) { plugin.logger.log(Level.WARNING, "Invero 主菜单关闭失败: player=${player.uniqueId}", error) }
+            }
+            if (org.bukkit.Bukkit.isOwnedByCurrentRegion(player)) close.run()
+            else if (plugin.isEnabled) player.scheduler.execute(plugin, close, null, 1L)
         }
         managedIds.clear()
     }

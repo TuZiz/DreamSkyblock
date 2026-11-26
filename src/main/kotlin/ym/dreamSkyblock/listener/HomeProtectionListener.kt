@@ -19,6 +19,7 @@ import ym.dreamSkyblock.model.Home
 import ym.dreamSkyblock.model.HomeFlag
 import ym.dreamSkyblock.service.HomeManager
 import ym.dreamSkyblock.world.HomeWorldManager
+import ym.dreamSkyblock.world.HomeFlightSettings
 
 class HomeProtectionListener(private val homes: HomeManager, private val worlds: HomeWorldManager) : Listener {
     private fun home(entity: Entity): Home? = worlds.homeByWorld(entity.world)?.let(homes::byId)
@@ -87,11 +88,11 @@ class HomeProtectionListener(private val homes: HomeManager, private val worlds:
     fun portal(event: PlayerPortalEvent) { val h = home(event.player) ?: return; if ((event.cause == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL && !enabled(h, HomeFlag.PORTAL_NETHER)) || (event.cause == PlayerTeleportEvent.TeleportCause.END_PORTAL && !enabled(h, HomeFlag.PORTAL_END))) event.isCancelled = true }
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     fun portalCreate(event: org.bukkit.event.world.PortalCreateEvent) { val h = worlds.homeByWorld(event.world)?.let(homes::byId) ?: return; if (!enabled(h, HomeFlag.PORTAL_NETHER)) event.isCancelled = true }
-    @EventHandler
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun teleport(event: PlayerTeleportEvent) {
         val fromHome = worlds.homeByWorld(event.from.world)
         val toHome = event.to.world?.let(worlds::homeByWorld)
-        if (fromHome != null && toHome == null) event.player.allowFlight = false
-        if (toHome != null) homes.byId(toHome)?.let { event.player.allowFlight = enabled(it, HomeFlag.FLIGHT) }
+        if (fromHome != null && toHome == null) HomeFlightSettings.apply(event.player, false)
+        if (toHome != null) homes.byId(toHome)?.let { HomeFlightSettings.apply(event.player, enabled(it, HomeFlag.FLIGHT)) }
     }
 }

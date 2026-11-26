@@ -1,0 +1,30 @@
+# 五行像素菜单；原生贴图176×108。
+'schema-version': 1
+'title': '<#FFFFFF><font:dreamskyblock_menus:space></font><font:dreamskyblock_menus:menus></font>'
+'rows': 5
+'layout':
+  - 'PPP      '
+  - 'PPP      '
+  - '         '
+  - '         '
+  - 'B        '
+'items':
+  'P':
+    'material': 'PAPER'
+    'name': '<#D7E7C1>普通副本'
+    'lore':
+      - '<#A8B89C>选择服务器常驻副本'
+      - '<#D7E7C1>点击查看'
+    'action':
+      'left': 'menu open "普通副本"
+
+        true'
+    'item_model': 'dreamskyblock_menus:hitbox'
+  'B':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<#D7E7C1>返回主菜单'
+    'action':
+      'left': 'menu open "主菜单"
+
+        true'

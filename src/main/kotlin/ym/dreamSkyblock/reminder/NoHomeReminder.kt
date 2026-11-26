@@ -17,13 +17,12 @@ class NoHomeReminder @JvmOverloads constructor(private val plugin: DreamSkyblock
                      private val messages: MessageService,
                      private val viewing: (Player) -> Boolean = { it.openInventory.topInventory.holder is HomeMenuHolder }) : Listener {
     private data class Session(val player: Player, var seconds: Int = 3)
-    private val sessions = mutableMapOf<UUID, Session>()
-    private var task: ScheduledTask? = null
+    private val sessions = java.util.concurrent.ConcurrentHashMap<UUID, Session>()
+    @Volatile private var task: ScheduledTask? = null
 
     fun start() {
         if (task != null) return
         task = plugin.server.globalRegionScheduler.runAtFixedRate(plugin, { pulse() }, 20L, 20L)
-        plugin.server.onlinePlayers.forEach(::track)
     }
 
     @EventHandler
@@ -46,19 +45,23 @@ class NoHomeReminder @JvmOverloads constructor(private val plugin: DreamSkyblock
     private fun pulse() {
         if (!plugin.isEnabled || task == null || !homes.ready) return
         // Includes players who leave or delete an island while staying online.
-        plugin.server.onlinePlayers.forEach(::track)
-        sessions.toMap().forEach { (id, session) ->
-            val player = session.player
+        plugin.server.onlinePlayers.forEach { player -> player.scheduler.run(plugin, { remind(player) }, null) }
+    }
+
+    private fun remind(player: Player) {
+            if (task == null) return
+            val id = player.uniqueId
+            track(player)
+            val session = sessions[id]?.takeIf { it.player === player } ?: return
             if (!player.isOnline || !player.hasPermission("dreamskyblock.use") || homes.byPlayer(id) != null) {
                 sessions.remove(id)
-                return@forEach
+                return
             }
-            if (viewing(player)) return@forEach
+            if (viewing(player)) return
             if (--session.seconds <= 0) {
                 messages.send(player, "home.no-island-reminder")
                 session.seconds = 15
             }
-        }
     }
 
     fun stop() {

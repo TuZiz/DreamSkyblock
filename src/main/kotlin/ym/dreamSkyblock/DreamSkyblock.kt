@@ -14,6 +14,7 @@ import ym.dreamSkyblock.gui.HomeGuiManager
 import ym.dreamSkyblock.listener.HomeOccupancyListener
 import ym.dreamSkyblock.listener.HomeProtectionListener
 import ym.dreamSkyblock.listener.HomeHungerListener
+import ym.dreamSkyblock.listener.HomeVoidListener
 import ym.dreamSkyblock.placeholder.DreamSkyblockExpansion
 import ym.dreamSkyblock.reminder.NoHomeReminder
 import ym.dreamSkyblock.login.HomeLoginReturn
@@ -52,15 +53,16 @@ class DreamSkyblock : JavaPlugin() {
     private var initialSpawn: HomeInitialSpawn? = null
     private var homeRespawn: HomeRespawn? = null
     private var borderDisplay: HomeBorderDisplay? = null
+    private var voidRescue: HomeVoidListener? = null
     private var values: HomeValueService? = null
     private val ioExecutor = Executors.newFixedThreadPool(2) { runnable -> Thread(runnable, "DreamSkyblock-IO").apply { isDaemon = false } }
     @Volatile private var stopping = false
 
     override fun onEnable() {
-        // Purpur/Leaf 使用Paper主线程模型。禁止以Folia声明绕过不支持的世界生命周期。
         val regionThreaded = runCatching { Class.forName("io.papermc.paper.threadedregions.RegionizedServer") }.isSuccess
-        if (regionThreaded) {
-            logger.severe("当前运行路径只支持 Paper/Purpur/Leaf 26.2 主线程模型；拒绝在 Folia/Canvas/Arbor 注册世界生命周期")
+        val canvasWorlds = ym.dreamSkyblock.world.RuntimeWorldUnload(server).asynchronous
+        if (regionThreaded && !canvasWorlds) {
+            logger.severe("当前区域线程核心没有 Canvas 异步世界卸载接口，无法安全管理原生空岛存档")
             server.pluginManager.disablePlugin(this)
             return
         }
@@ -94,6 +96,7 @@ class DreamSkyblock : JavaPlugin() {
         getCommand("home")?.apply { setExecutor(command); setTabCompleter(command) }
         server.pluginManager.registerEvents(HomeProtectionListener(homeManager, worldManager), this)
         server.pluginManager.registerEvents(HomeHungerListener(worldManager::isHomeWorld), this)
+        HomeVoidListener(worldManager::isHomeWorld).also { voidRescue = it; server.pluginManager.registerEvents(it, this) }
         server.pluginManager.registerEvents(HomeOccupancyListener(homeManager, worldManager, configService), this)
         val loginReturn = HomeLoginReturn(this, homeManager, worldManager).also { this.loginReturn = it }
         server.pluginManager.registerEvents(loginReturn, this)
@@ -126,6 +129,7 @@ class DreamSkyblock : JavaPlugin() {
 
     override fun onDisable() {
         stopping = true
+        voidRescue?.stop(); voidRescue = null
         databaseBackups?.stop(); databaseBackups = null
         initialSpawn?.stop(); initialSpawn = null
         homeRespawn?.stop(); homeRespawn = null

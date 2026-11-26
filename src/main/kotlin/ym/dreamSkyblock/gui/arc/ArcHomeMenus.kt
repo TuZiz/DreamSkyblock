@@ -26,9 +26,9 @@ class ArcHomeMenus(
     private val action: (Player, HomeMenu, UUID?, String) -> Unit
 ) : Listener {
     private data class Session(val token: String, val menu: HomeMenu, val homeId: UUID?)
-    private val sessions = mutableMapOf<UUID, Session>()
-    private val pending = mutableMapOf<UUID, Session>()
-    private var api: ArcMenuApi? = null
+    private val sessions = java.util.concurrent.ConcurrentHashMap<UUID, Session>()
+    private val pending = java.util.concurrent.ConcurrentHashMap<UUID, Session>()
+    @Volatile private var api: ArcMenuApi? = null
     private var cleanup: ScheduledTask? = null
 
     fun start() {
@@ -49,9 +49,13 @@ class ArcHomeMenus(
             sessions.keys.toList().forEach { id ->
                 val player = plugin.server.getPlayer(id)
                 val session = sessions[id] ?: return@forEach
-                if (player == null) sessions.remove(id)
-                else if (bridge.surface(player) == null) sessions.remove(id)
-                else if (!valid(player, session)) close(player)
+                if (player == null) sessions.remove(id, session)
+                else player.scheduler.run(plugin, {
+                    if (sessions[id] === session) {
+                        if (bridge.surface(player) == null) sessions.remove(id, session)
+                        else if (!valid(player, session)) close(player)
+                    }
+                }, null)
             }
         }, 20L, 20L)
         plugin.logger.info("空岛主界面已接入 ArcMenu API v1；业务与子菜单继续使用原 DreamSkyblock")
@@ -88,12 +92,11 @@ class ArcHomeMenus(
         if (component !in allowed) return false
         if (component != "upgrade") close(player)
         pending[player.uniqueId] = session
-        plugin.server.globalRegionScheduler.execute(plugin) {
-            if (pending[player.uniqueId] === session) {
-                pending.remove(player.uniqueId)
+        player.scheduler.run(plugin, {
+            if (pending.remove(player.uniqueId, session)) {
                 if (valid(player, session)) action(player, session.menu, session.homeId, component)
             }
-        }
+        }, { pending.remove(player.uniqueId, session) })
         return true
     }
 
@@ -109,8 +112,17 @@ class ArcHomeMenus(
     }
 
     fun closeAll() {
-        sessions.keys.toList().mapNotNull(plugin.server::getPlayer).forEach(::close)
-        sessions.clear()
+        val bridge = api
+        sessions.entries.toList().forEach { (id, session) ->
+            val player = plugin.server.getPlayer(id)
+            if (player == null) sessions.remove(id, session)
+            else {
+                val close = Runnable { if (sessions.remove(id, session)) bridge?.close(player) }
+                if (org.bukkit.Bukkit.isOwnedByCurrentRegion(player)) close.run()
+                else if (plugin.isEnabled) player.scheduler.execute(plugin, close, { sessions.remove(id, session) }, 1L)
+                else sessions.remove(id, session)
+            }
+        }
         pending.clear()
     }
 

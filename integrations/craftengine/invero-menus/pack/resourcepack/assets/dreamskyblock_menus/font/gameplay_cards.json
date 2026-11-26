@@ -1,0 +1,22 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "dreamskyblock_menus:gui/gameplay-cards.png",
+      "height": 125,
+      "ascent": 13,
+      "chars": [
+        ""
+      ]
+    },
+    {
+      "type": "bitmap",
+      "file": "dreamskyblock_menus:gui/gameplay-cards_right.png",
+      "height": 125,
+      "ascent": 13,
+      "chars": [
+        ""
+      ]
+    }
+  ]
+}

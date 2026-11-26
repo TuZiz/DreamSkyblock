@@ -119,3 +119,5 @@ run/
 /.playwright-cli/
 /output/
 /x.payload.op
+
+*.previous

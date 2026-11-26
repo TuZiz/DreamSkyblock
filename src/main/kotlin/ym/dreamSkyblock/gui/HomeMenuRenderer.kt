@@ -7,6 +7,7 @@ import org.bukkit.entity.Player
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.Material
+import org.bukkit.NamespacedKey
 import ym.dreamSkyblock.model.HomeFlag
 import ym.dreamSkyblock.text.MessageService
 import net.kyori.adventure.text.Component
@@ -84,6 +85,7 @@ class HomeMenuRenderer(private val messages: MessageService) {
             itemName(itemText(section.getString("name")!!, values))
             lore(section.getStringList("lore").map { itemText(it, values) })
             section.getString("custom-model-data")?.toIntOrNull()?.let(::setCustomModelData)
+            section.getString("item-model")?.let { setItemModel(NamespacedKey.fromString(it)) }
         }
         return item
     }

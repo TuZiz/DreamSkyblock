@@ -24,17 +24,16 @@ import java.util.UUID
 class HomeBorderDisplay(private val plugin: DreamSkyblock, private val homes: HomeManager,
                         private val worlds: HomeWorldManager) : Listener {
     private data class View(val worldId: UUID, val hidden: WorldBorder, val previous: WorldBorder?)
-    private val views = mutableMapOf<UUID, View>()
-    private val pendingResync = mutableMapOf<UUID, ScheduledTask>()
+    private val views = java.util.concurrent.ConcurrentHashMap<UUID, View>()
+    private val pendingResync = java.util.concurrent.ConcurrentHashMap<UUID, ScheduledTask>()
     private val dust = Particle.DustOptions(Color.fromRGB(116, 185, 255), 1.0f)
-    private var task: ScheduledTask? = null
+    @Volatile private var task: ScheduledTask? = null
 
     fun start() {
         if (task != null) return
         task = plugin.server.globalRegionScheduler.runAtFixedRate(plugin, {
-            if (plugin.isEnabled) plugin.server.onlinePlayers.forEach(::update)
+            if (plugin.isEnabled) plugin.server.onlinePlayers.forEach { player -> player.scheduler.run(plugin, { update(player) }, null) }
         }, 1L, 10L)
-        plugin.server.onlinePlayers.forEach(::update)
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -51,12 +50,12 @@ class HomeBorderDisplay(private val plugin: DreamSkyblock, private val homes: Ho
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun resized(event: WorldBorderBoundsChangeEvent) {
-        if (event.worldBorder.world != null) event.world.players.forEach { resync(it) }
+        if (event.worldBorder.world != null) event.world.players.forEach { resync(it, event.world.uid) }
     }
 
     @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
     fun centered(event: WorldBorderCenterChangeEvent) {
-        if (event.worldBorder.world != null) event.world.players.forEach { resync(it) }
+        if (event.worldBorder.world != null) event.world.players.forEach { resync(it, event.world.uid) }
     }
 
     @EventHandler
@@ -69,10 +68,11 @@ class HomeBorderDisplay(private val plugin: DreamSkyblock, private val homes: Ho
     private fun resync(player: Player, expectedWorld: UUID = player.world.uid) {
         if (task == null || !plugin.isEnabled) return
         pendingResync.remove(player.uniqueId)?.cancel()
-        pendingResync[player.uniqueId] = plugin.server.globalRegionScheduler.runDelayed(plugin, {
-            pendingResync.remove(player.uniqueId)
+        val scheduled = player.scheduler.runDelayed(plugin, { scheduledTask ->
+            pendingResync.remove(player.uniqueId, scheduledTask)
             if (task != null && plugin.isEnabled && player.isOnline && player.world.uid == expectedWorld) update(player, true)
-        }, 1L)
+        }, null, 1L)
+        if (scheduled != null) pendingResync[player.uniqueId] = scheduled
     }
 
     /** Also used after entering an island; includes visitors regardless of ownership or use permission. */
@@ -113,7 +113,7 @@ class HomeBorderDisplay(private val plugin: DreamSkyblock, private val homes: Ho
         pendingResync.clear()
         task?.cancel()
         task = null
-        plugin.server.onlinePlayers.forEach(::restore)
+        plugin.server.onlinePlayers.filter { org.bukkit.Bukkit.isOwnedByCurrentRegion(it) }.forEach(::restore)
         views.clear()
     }
 }

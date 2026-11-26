@@ -31,6 +31,7 @@ class HomeWorldManager(
     private val spawnHolds = mutableMapOf<UUID, Int>()
     private val operations = HomeOperationQueue()
     private val tasks = PaperWorldTasks(plugin)
+    private val unloader = RuntimeWorldUnload(plugin.server)
     @Volatile private var stopped = false
 
     fun getLoaded(home: Home): World? = loaded[home.id]
@@ -79,9 +80,9 @@ class HomeWorldManager(
                 return@submit CompletableFuture.failedFuture(IllegalStateException("家园不可加载: ${home.status}"))
             }
             open(home, template, fresh).thenCompose { world ->
-                tasks.global {
-                    if (!current()) CompletableFuture.completedFuture(false)
-                    else if (player == null || !player.isOnline) CompletableFuture.completedFuture(true)
+                if (player == null) CompletableFuture.completedFuture(fresh || current())
+                else tasks.entity(player, { CompletableFuture.completedFuture(false) }) {
+                    if (!current() || !player.isOnline) CompletableFuture.completedFuture(false)
                     else {
                         check(home.isOwner(player.uniqueId) && player.hasPermission("dreamskyblock.use")) { "访问期间权限或家园归属已改变" }
                         val point = home.spawn ?: template.spawn
@@ -109,8 +110,8 @@ class HomeWorldManager(
                 val world = if (existing != null) {
                     check(!fresh) { "新家园ID已加载，拒绝覆盖" }
                     track(home, existing)
-                    HomeWorldSettings.apply(existing, home, template, false)
-                    StarterTreeLeaves.repairLoaded(existing, template)
+                    HomeWorldSettings.apply(plugin, existing, home, template, false)
+                    if (!unloader.asynchronous) StarterTreeLeaves.repairLoaded(existing, template)
                     existing
                 } else {
                     val point = home.spawn ?: template.spawn
@@ -124,15 +125,34 @@ class HomeWorldManager(
                     check(world.worldFolder.toPath().toAbsolutePath().normalize() == files.worldDir(home.id).toAbsolutePath().normalize()) {
                         "Paper 世界路径不符合原生存储目录: ${world.worldFolder}"
                     }
-                    HomeWorldSettings.apply(world, home, template, fresh)
-                    if (fresh && template.generator == HomeTemplate.GeneratorType.SKYBLOCK) IslandGenerator.generate(world, template)
-                    StarterTreeLeaves.repairLoaded(world, template)
-                    if (fresh) world.save(true)
+                    HomeWorldSettings.apply(plugin, world, home, template, fresh)
+                    if (!unloader.asynchronous) {
+                        if (fresh && template.generator == HomeTemplate.GeneratorType.SKYBLOCK) IslandGenerator.generate(world, template)
+                        StarterTreeLeaves.repairLoaded(world, template)
+                        if (fresh) world.save(true)
+                    }
                     world
                 }
                 world to world.uid
             }
-        }.thenApplyAsync({ (world, uid) -> if (fresh) files.recordCreation(home.id, uid); world }, ioExecutor)
+        }.thenCompose { (world, uid) ->
+            if (fresh && unloader.asynchronous) persistFirstCanvasWorld(home, template, world, uid)
+            else CompletableFuture.supplyAsync({ if (fresh) files.recordCreation(home.id, uid); world }, ioExecutor)
+        }
+    }
+
+    private fun persistFirstCanvasWorld(home: Home, template: HomeTemplate, world: World, uid: UUID): CompletableFuture<World> {
+        val chunks = if (template.generator == HomeTemplate.GeneratorType.SKYBLOCK) IslandGenerator.chunks(template) else emptySet()
+        val writes = chunks.map { (x, z) ->
+            world.getChunkAtAsync(x, z).thenCompose {
+                tasks.chunk(world, x, z) { IslandGenerator.generateChunk(world, template, x, z) }
+            }
+        }
+        return CompletableFuture.allOf(*writes.toTypedArray()).thenCompose { unloadEmpty(home) }
+            .thenApplyAsync({ unloaded ->
+                check(unloaded && files.hasWorldData(home.id)) { "Canvas 首次世界保存未完成: ${home.id}" }
+                files.recordCreation(home.id, uid)
+            }, ioExecutor).thenCompose { open(home, template, false) }
     }
 
     private fun track(home: Home, world: World) {
@@ -145,7 +165,7 @@ class HomeWorldManager(
     fun adopt(homes: Collection<Home>) {
         homes.forEach { home -> plugin.server.getWorld(key(home))?.let { world ->
             track(home, world)
-            config.templates[home.templateId]?.let { StarterTreeLeaves.repairLoaded(world, it) }
+            if (!unloader.asynchronous) config.templates[home.templateId]?.let { StarterTreeLeaves.repairLoaded(world, it) }
             if (world.players.isEmpty()) scheduleUnload(home, config.unloadDelaySeconds)
         } }
     }
@@ -169,7 +189,7 @@ class HomeWorldManager(
 
     fun applyFlags(home: Home) {
         if (stopped || isBusy(home)) return
-        operations.submit(home.id) { tasks.global { loaded[home.id]?.let { HomeWorldSettings.flags(it, home) } } }
+        operations.submit(home.id) { tasks.global { loaded[home.id]?.let { HomeWorldSettings.flags(plugin, it, home) } } }
             .exceptionally { report("应用设置/边界", home, it); null }
     }
 
@@ -179,7 +199,7 @@ class HomeWorldManager(
             if (loaded[home.id] == null || pendingUnload.containsKey(home.id) || isBusy(home)) return@global
             pendingUnload[home.id] = plugin.server.globalRegionScheduler.runDelayed(plugin, {
                 pendingUnload.remove(home.id)
-                operations.submit(home.id) { tasks.global { unloadEmpty(home) } }.whenComplete { ok, error ->
+                operations.submit(home.id) { unloadEmpty(home) }.whenComplete { ok, error ->
                     if (error != null) report("无人卸载", home, error)
                     if (!stopped && (error != null || ok == false)) tasks.global {
                         if (loaded[home.id]?.players?.isEmpty() == true) scheduleUnload(home, config.unloadDelaySeconds)
@@ -191,18 +211,22 @@ class HomeWorldManager(
 
     fun cancelUnload(home: Home) { pendingUnload.remove(home.id)?.cancel() }
 
-    /** 主线程；false 时仍保留加载记录及原生存档供重试。 */
-    private fun unloadEmpty(home: Home): Boolean {
-        if ((spawnHolds[home.id] ?: 0) > 0) return false
-        val world = loaded[home.id] ?: plugin.server.getWorld(key(home)) ?: return true
-        if (world.players.isNotEmpty()) return false
-        // Paper 的 save=true 已负责保存并关闭存档；不要在它之前再完整 flush 一次。
-        if (!plugin.server.unloadWorld(world, true)) return false
-        loaded.remove(home.id, world)
-        records.remove(home.id)
-        home.loadedWorldName = null
-        return true
-    }
+    /** 整个卸载（包括存档关闭）完成前，调用方继续占有该空岛的操作队列。 */
+    private fun unloadEmpty(home: Home): CompletableFuture<Boolean> = tasks.global {
+        if ((spawnHolds[home.id] ?: 0) > 0) return@global CompletableFuture.completedFuture(false)
+        val world = loaded[home.id] ?: plugin.server.getWorld(key(home))
+            ?: return@global CompletableFuture.completedFuture(true)
+        if (world.players.isNotEmpty()) return@global CompletableFuture.completedFuture(false)
+        unloader.saveAndUnload(world).thenCompose { unloaded ->
+            if (!unloaded) CompletableFuture.completedFuture(false)
+            else tasks.global {
+                loaded.remove(home.id, world)
+                records.remove(home.id)
+                home.loadedWorldName = null
+                true
+            }
+        }
+    }.thenCompose { it }
 
     /** 维护期间禁止进入和修改数据；先安全卸载，再执行磁盘事务。 */
     fun <T> maintain(home: Home, evacuate: Boolean = false, action: () -> CompletableFuture<T>): CompletableFuture<T> {
@@ -214,10 +238,16 @@ class HomeWorldManager(
                 if (world != null && world.players.isNotEmpty()) {
                     check(evacuate && world.players.size == 1) { "家园内仍有玩家" }
                     val destination = plugin.server.worlds.firstOrNull { !isHomeWorld(it) && it.uid != world.uid } ?: error("找不到安全离开世界")
-                    world.players.first().teleportAsync(destination.spawnLocation)
+                    val player = world.players.first()
+                    val spawn = destination.spawnLocation
+                    tasks.entity(player) {
+                        if (player.world == world) player.teleportAsync(spawn)
+                        else CompletableFuture.completedFuture(true)
+                    }.thenCompose { it }
                 } else CompletableFuture.completedFuture(true)
             }.thenCompose { it }.thenCompose { moved ->
-                tasks.global { check(moved && unloadEmpty(home)) { "家园保存/卸载未成功" } }
+                check(moved) { "家园玩家撤离未成功" }
+                unloadEmpty(home).thenApply { unloaded -> check(unloaded) { "家园保存/卸载未成功" } }
             }.thenCompose { action() }
         }.whenComplete { _, error ->
             maintenance.remove(home.id)
@@ -232,7 +262,7 @@ class HomeWorldManager(
         tasks.close()
         pendingUnload.values.forEach { it.cancel() }
         pendingUnload.clear()
-        loaded.values.toList().forEach { world ->
+        if (!unloader.asynchronous) loaded.values.toList().forEach { world ->
             try {
                 if (world.players.isNotEmpty()) world.save(true)
                 else if (!plugin.server.unloadWorld(world, true)) {

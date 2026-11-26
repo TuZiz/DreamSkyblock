@@ -1,0 +1,151 @@
+'schema-version': 1
+'title': '<#FFFFFF><font:dreamskyblock_menus:space></font><font:dreamskyblock_menus:menus></font>'
+'layout':
+  - 'WWWWIIIIG'
+  - '  PPPPP  '
+  - '  PPPPP  '
+  - 'QQQCCCSSS'
+  - 'J  KKK   '
+'bindings':
+  'command':
+    - 'ismenu'
+'items':
+  'C':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<gradient:#F6D365:#FDA085><b>中央仓库</b></gradient>'
+    'lore':
+      - '<#67E8F9>打开当前空岛的中央仓库'
+      - '<#5EEAD4>本岛成员共享仓库资源'
+      - ''
+      - '<#FFD700>▸ 点击打开中央仓库'
+    'action':
+      'left': 'playerPerform "dreamskyblock:home menu-action warehouse"
+
+        true'
+  'W':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<gradient:#00F2FE:#4FACFE><b>返回主城</b></gradient>'
+    'lore':
+      - '<#67E8F9>传送到 world 世界当前的出生点'
+      - '<#FFD700>▸ 点击立即传送'
+    'action':
+      'left': 'playerPerform "dreamskyblock:home menu-action spawn"
+
+        true'
+  '#':
+    'material': 'CYAN_STAINED_GLASS_PANE'
+    'name': '<#00F2FE>✦'
+  '+':
+    'material': 'YELLOW_STAINED_GLASS_PANE'
+    'name': '<#FFD700>❖'
+  'I':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<gradient:#00FF87:#60EFFF><b>🌱 我的空岛信息</b></gradient>'
+    'lore':
+      - '<#2DD4BF>  ∟ 初始主人：<#FFD700><b>%dreamskyblock_owner_name%</b>'
+      - '<#2DD4BF>  ∟ 空岛等级：<#00FF87><b>%dreamskyblock_level%</b>'
+      - '<#2DD4BF>  ∟ 建造边界：<#00F2FE><b>%dreamskyblock_border% × %dreamskyblock_border%</b>'
+      - '<#2DD4BF>  ∟ 共同成员：<#00FF87><b>%dreamskyblock_member_count%</b> <#67E8F9>/ <#FFD700><b>%dreamskyblock_member_limit%</b>'
+      - ''
+      - '<#2DD4BF>  ∟ 当前空岛价值：<#00FF87><b>%dreamskyblock_value%</b>'
+      - '<#2DD4BF>  ∟ 下一等级价值门槛：<#00F2FE><b>%dreamskyblock_next_value_threshold%</b>'
+      - '<#2DD4BF>  ∟ 距离下一等级还差：<#FFD700><b>%dreamskyblock_remaining_value%</b>'
+      - '<#2DD4BF>  ∟ 最高建造边界：<#00FF87><b>384 × 384</b>'
+      - ''
+      - '<#FBBF24>  * 设施价值决定等级，拆除可降级，已解锁边界保留'
+      - ''
+      - '<#FFD700>▸ 左键管理空岛'
+      - '<#67E8F9>▸ 右键回到空岛'
+    'action':
+      'left': 'playerPerform "dreamskyblock:home menu-action info"
+
+        true'
+      'right': 'playerPerform "dreamskyblock:home menu-action teleport"
+
+        true'
+  'X':
+    'material': 'BARRIER'
+    'name': '<gradient:#FF416C:#FF4B2B><b>✖ 关闭菜单</b></gradient>'
+    'lore':
+      - '<#FBBF24>▸ 点击关闭当前界面'
+    'action':
+      'left': 'menu close
+
+        true'
+  'Q':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<gradient:#F6D365:#FDA085><b>任务中心</b></gradient>'
+    'lore':
+      - '<#67E8F9>查看任务与任务进度'
+      - ''
+      - '<#FFD700>▸ 点击打开任务中心'
+    'action':
+      'left': 'menu close
+
+        playerPerform "quest"
+
+        true'
+  'K':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<gradient:#00FF87:#60EFFF><b>玩家市场</b></gradient>'
+    'lore':
+      - '<#67E8F9>打开市场界面'
+      - ''
+      - '<#FFD700>▸ 点击打开玩家市场'
+    'action':
+      'left': 'menu close
+
+        playerPerform "market"
+
+        true'
+  'S':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<gradient:#F6D365:#FDA085><b>商店</b></gradient>'
+    'lore':
+      - '<#67E8F9>前往服务器商店入口'
+      - ''
+      - '<#FFD700>▸ 点击打开商店'
+    'action':
+      'left': 'menu close
+
+        playerPerform "ymshop open copper-exchange "
+
+        true'
+  'P':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<#CDE7AF>传送'
+    'lore':
+      - '<#B7C9A7>打开传送菜单'
+    'action':
+      'left': 'menu open "传送"
+
+        true'
+  'G':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<#CDE7AF>游戏设置'
+    'lore':
+      - '<#B7C9A7>调整个人游戏显示设置'
+      - '<#FFD700>点击打开游戏设置'
+    'action':
+      'left': 'menu open "游戏设置"
+
+        true'
+  'J':
+    'material': 'PAPER'
+    'item_model': 'dreamskyblock_menus:hitbox'
+    'name': '<#D7E7C1>玩法指南'
+    'lore':
+      - '<#A8B89C>点击打开玩法菜单'
+    'action':
+      'left': 'menu open "玩法"
+
+        true'
+'rows': 5

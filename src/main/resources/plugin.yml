@@ -4,7 +4,7 @@ version: '${version}'
 main: ym.dreamSkyblock.DreamSkyblock
 api-version: '26.2'
 load: POSTWORLD
-folia-supported: false
+folia-supported: true
 softdepend:
   - PlaceholderAPI
   - ArcMenu

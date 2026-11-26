@@ -1,0 +1,43 @@
+# CE 像素皮肤；仅上半菜单，透明热区保留原动作与悬停说明。
+'schema-version': 1
+'title': '<#FFFFFF><font:dreamskyblock:ui_space></font><font:dreamskyblock:creation_ui></font>'
+'Shape':
+- '         '
+- '    I    '
+- '         '
+- ' YYY NNN '
+- '         '
+'components':
+  'info':
+    'symbol': 'I'
+    'material': 'PAPER'
+    'name': '<gradient:#00FF87:#60EFFF><b>🌱 初始星域 · <template></b></gradient>'
+    'lore':
+    - '<#FFD700>❖ 领地初始参数'
+    - '<#2DD4BF>  ∟ 核心平台：<#00FF87><b><platform> × <platform></b>'
+    - '<#2DD4BF>  ∟ 初始星级：<#FFD700><b><level> 级</b>'
+    - '<#2DD4BF>  ∟ 建造边界：<#00F2FE><b><border> × <border></b>'
+    - ''
+    - '<#FBBF24>  ★ 每位开拓者仅可拥有或归属 1 座专属空岛'
+    - '<#67E8F9>  ★ 确认唤醒后将立即开辟星域并传送登岛！'
+    'item-model': 'dreamskyblock:gui_hitbox'
+  'yes':
+    'symbol': 'Y'
+    'material': 'PAPER'
+    'name': '<gradient:#00FF87:#60EFFF><b>✔ 确认唤醒空岛</b></gradient>'
+    'lore':
+    - '<#5EEAD4>  以当前初始领地开启你的星海生存之旅！'
+    - ''
+    - '<#FFD700>▸ <b>点击立即创建并传送登岛</b>'
+    'action': 'create'
+    'item-model': 'dreamskyblock:gui_hitbox'
+  'no':
+    'symbol': 'N'
+    'material': 'PAPER'
+    'name': '<gradient:#FF416C:#FF4B2B><b>✖ 暂缓开辟 · 返回</b></gradient>'
+    'lore':
+    - '<#67E8F9>  返回空岛星海主界面，暂不生成世界'
+    - ''
+    - '<#FBBF24>▸ <b>点击取消并返回主菜单</b>'
+    'action': 'menu:main'
+    'item-model': 'dreamskyblock:gui_hitbox'

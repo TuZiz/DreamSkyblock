@@ -20,13 +20,13 @@ import java.util.UUID
 class HomeLoginReturn(private val plugin: DreamSkyblock, private val homes: HomeManager, private val worlds: HomeWorldManager) : Listener {
     private class Session(val player: Player, val homeId: UUID, var returning: Boolean = false)
     private val key = NamespacedKey(plugin, "login_return_home")
-    private val sessions = mutableMapOf<UUID, Session>()
-    private var task: ScheduledTask? = null
+    private val sessions = java.util.concurrent.ConcurrentHashMap<UUID, Session>()
+    @Volatile private var task: ScheduledTask? = null
 
     fun start() {
         if (task != null) return
         task = plugin.server.globalRegionScheduler.runAtFixedRate(plugin, { pulse() }, 20L, 20L)
-        plugin.server.onlinePlayers.forEach(::track)
+        plugin.server.onlinePlayers.forEach { player -> player.scheduler.run(plugin, { track(player) }, null) }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -70,26 +70,31 @@ class HomeLoginReturn(private val plugin: DreamSkyblock, private val homes: Home
         if (task == null || !plugin.isEnabled || !homes.ready) return
         sessions.values.toList().forEach { session ->
             val player = session.player
-            if (!current(session)) { sessions.remove(player.uniqueId, session); return@forEach }
+            player.scheduler.run(plugin, { process(session) }, { sessions.remove(player.uniqueId, session) })
+        }
+    }
+
+    private fun process(session: Session) {
+            val player = session.player
+            if (!current(session)) { sessions.remove(player.uniqueId, session); return }
             val home = homes.byPlayer(player.uniqueId)
             if (home?.id != session.homeId || !home.isOwner(player.uniqueId) || !player.hasPermission("dreamskyblock.use")) {
                 sessions.remove(player.uniqueId, session)
                 player.persistentDataContainer.remove(key)
-                return@forEach
+                return
             }
             if (worlds.homeByWorld(player.world) == home.id) {
                 worlds.cancelUnload(home)
                 sessions.remove(player.uniqueId, session)
-                return@forEach
+                return
             }
-            if (session.returning) return@forEach
+            if (session.returning) return
             session.returning = true
             val started = homes.returnOnLogin(player, home.id, { current(session) }) {
                 // 不自动反复重试失败存档；保留 PDC，玩家可用 /home 或重登再试。
                 ok -> if (ok) sessions.remove(player.uniqueId, session)
             }
             if (!started) session.returning = false
-        }
     }
 
     private fun current(session: Session): Boolean = task != null && plugin.isEnabled &&
@@ -102,8 +107,9 @@ class HomeLoginReturn(private val plugin: DreamSkyblock, private val homes: Home
     }
 
     fun stop() {
-        // 先记录仍在线玩家，再由服务器原生玩家保存处理 PDC；不在主线程强制 saveData/写盘。
-        if (homes.ready) plugin.server.onlinePlayers.filter { it.uniqueId !in sessions }.forEach { remember(it) }
+        if (homes.ready) plugin.server.onlinePlayers.filter {
+            !sessions.containsKey(it.uniqueId) && org.bukkit.Bukkit.isOwnedByCurrentRegion(it)
+        }.forEach { remember(it) }
         task?.cancel()
         task = null
         sessions.clear()

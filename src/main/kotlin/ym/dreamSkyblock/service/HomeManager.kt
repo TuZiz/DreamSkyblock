@@ -128,7 +128,7 @@ class HomeManager(
                 plugin.logger.log(Level.SEVERE, "创建家园元数据失败 home_id=${home.id}；禁止创建世界", error)
                 tasks.global {
                     homes.remove(home.id); playerHome.remove(player.uniqueId, home.id); playerLocks.remove(player.uniqueId)
-                    messages.send(player, "home.create-failed")
+                    tasks.entity(player) { messages.send(player, "home.create-failed") }
                 }
             } else worlds.create(home, template, player) { ok ->
                 storage.updateStatus(home, if (ok) "ACTIVE" else "RECOVERY", ioExecutor).whenComplete { _, statusError ->
@@ -139,7 +139,7 @@ class HomeManager(
                             plugin.logger.log(Level.SEVERE, "家园创建提交失败 home_id=${home.id}；保留存档", statusError)
                         }
                         if (ok && statusError == null) plugin.server.pluginManager.callEvent(ym.dreamSkyblock.api.HomeMembershipCommittedEvent(home.id, player.uniqueId))
-                        if (player.isOnline) messages.send(player, if (ok && statusError == null) "home.created" else "home.create-failed", mapOf("template" to template.displayName))
+                        tasks.entity(player) { messages.send(player, if (ok && statusError == null) "home.created" else "home.create-failed", mapOf("template" to template.displayName)) }
                     }
                 }
             }
@@ -151,7 +151,7 @@ class HomeManager(
         val home = byPlayer(player.uniqueId) ?: return messages.send(player, "home.none")
         if (!available(home)) return messages.send(player, if (home.status == "RECOVERY") "home.recovery-required" else "home.busy")
         val template = config.templates[home.templateId] ?: return messages.send(player, "template.not-found")
-        worlds.load(home, template, player) { ok -> if (!ok && player.isOnline) messages.send(player, "home.load-failed") }
+        worlds.load(home, template, player) { ok -> if (!ok) tasks.entity(player) { messages.send(player, "home.load-failed") } }
     }
 
     /** Paper 主线程。忙时由登录协调器稍后重试；发起后再次检查会话与归属。 */
@@ -164,8 +164,10 @@ class HomeManager(
                 byPlayer(player.uniqueId) === home && home.isOwner(player.uniqueId) &&
                 !restoring.get() && player.uniqueId !in playerLocks && available(home)
         }) { ok ->
-            if (!ok && current() && player.isOnline) messages.send(player, "home.load-failed")
-            done(ok)
+            tasks.entity(player) {
+                if (!ok && current() && player.isOnline) messages.send(player, "home.load-failed")
+                done(ok)
+            }
         }
         return true
     }
@@ -187,7 +189,7 @@ class HomeManager(
         }).whenComplete { _, error -> tasks.global {
             playerLocks.remove(player.uniqueId)
             if (error == null) plugin.server.pluginManager.callEvent(ym.dreamSkyblock.api.HomeMembershipCommittedEvent(home.id, player.uniqueId))
-            done(error == null)
+            tasks.entity(player) { done(error == null) }
         } }
     }
 
@@ -196,8 +198,8 @@ class HomeManager(
         val home = byPlayer(player.uniqueId) ?: return false
         if (!available(home) || !home.isOwner(player.uniqueId)) return false
         mutate(home, { it.flags[flag] = !(it.flags[flag] ?: flag.defaultValue) }).whenComplete { _, error -> tasks.global {
-            if (error == null) { worlds.applyFlags(home); if (player.isOnline) done() }
-            else if (player.isOnline) messages.send(player, "home.save-failed")
+            if (error == null) worlds.applyFlags(home)
+            tasks.entity(player) { if (error == null) done() else messages.send(player, "home.save-failed") }
         } }
         return true
     }
@@ -208,7 +210,7 @@ class HomeManager(
         if (!available(home)) return messages.send(player, "home.busy")
         if (home.owners.size <= 1) return messages.send(player, "home.last-owner")
         mutate(home, { it.owners.remove(player.uniqueId); it.ownerNames.remove(player.uniqueId) }).whenComplete { _, error -> tasks.global {
-            if (player.isOnline) messages.send(player, if (error == null) "home.left" else "home.save-failed")
+            tasks.entity(player) { messages.send(player, if (error == null) "home.left" else "home.save-failed") }
         } }
     }
 
@@ -220,7 +222,7 @@ class HomeManager(
         val name = home.ownerNames[member] ?: member.toString()
         mutate(home, { it.owners.remove(member); it.ownerNames.remove(member) }).whenComplete { _, error -> tasks.global {
             if (error == null) invites.invalidate(home.id)
-            if (player.isOnline) {
+            tasks.entity(player) {
                 messages.send(player, if (error == null) "member.removed" else "home.save-failed", mapOf("member" to name))
                 if (error == null) done()
             }
@@ -235,7 +237,7 @@ class HomeManager(
         maintenance.delete(home).whenComplete { _, error -> tasks.global {
             if (error == null) { home.owners.forEach { playerHome.remove(it, home.id) }; invites.invalidate(home.id) }
             else maintenanceFailed(home)
-            if (player.isOnline) messages.send(player, if (error == null) "home.deleted" else "home.delete-failed")
+            tasks.entity(player) { messages.send(player, if (error == null) "home.deleted" else "home.delete-failed") }
         } }
     }
 

@@ -8,6 +8,7 @@ import ym.dreamSkyblock.model.Home
 import ym.dreamSkyblock.model.HomeTemplate
 import ym.dreamSkyblock.world.NativeWorldFiles
 import ym.dreamSkyblock.world.PaperWorldTasks
+import ym.dreamSkyblock.world.RuntimeWorldUnload
 import ym.dreamSkyblock.world.VoidChunkGenerator
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -25,6 +26,7 @@ class LegacyHomeMigration(
     private val io: Executor
 ) {
     private val tasks = PaperWorldTasks(plugin)
+    private val unloader = RuntimeWorldUnload(plugin.server)
     private data class Legacy(val home: Home, val directory: Path)
 
     fun run(): CompletableFuture<List<Home>> = storage.loadIncludingDeleted(io).thenCompose { existing ->
@@ -116,8 +118,9 @@ class LegacyHomeMigration(
             val creator = WorldCreator.ofKey(NamespacedKey("dreamskyblock", files.worldName(home.id))).environment(template.environment)
             if (template.generator == HomeTemplate.GeneratorType.SKYBLOCK) creator.generator(VoidChunkGenerator())
             val world = creator.createWorld() ?: error("Paper 旧level.dat导入失败 home_id=${home.id}")
-            world.save(true)
-            check(plugin.server.unloadWorld(world, true)) { "Paper 导入后无法安全卸载 home_id=${home.id}" }
+            unloader.saveAndUnload(world)
+        }.thenCompose { it }.thenApply { unloaded ->
+            check(unloaded) { "旧家园导入后无法安全卸载 home_id=${home.id}" }
         }
     }.thenApplyAsync({ files.migrate(home.id, directory, storage.snapshot(home).toYaml()); files.hasWorldData(home.id) }, io)
 

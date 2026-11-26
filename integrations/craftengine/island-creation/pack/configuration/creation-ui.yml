@@ -1,0 +1,15 @@
+# height 单位为 GUI 像素；ascent 与原版箱子标题基线对齐。
+schema-version: 1
+images:
+  dreamskyblock:create_menu:
+    height: 108
+    ascent: 13
+    font: dreamskyblock:creation_ui
+    file: dreamskyblock:gui/main.png
+    char: ''
+  dreamskyblock:create_confirm:
+    height: 108
+    ascent: 13
+    font: dreamskyblock:creation_ui
+    file: dreamskyblock:gui/confirm.png
+    char: ''

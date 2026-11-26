@@ -1,0 +1,46 @@
+# 点击“我的空岛信息”打开；三个入口仍使用原有子菜单。
+schema-version: 1
+title: '<gradient:#00F2FE:#4FACFE><b>空岛管理</b></gradient>'
+info-hint: '<#FFD700>▸ 点击管理空岛'
+Shape:
+  - '+#######+'
+  - '# M S H #'
+  - '+###R###+'
+components:
+  border:
+    symbol: '#'
+    material: 'CYAN_STAINED_GLASS_PANE'
+    name: ''
+  corner:
+    symbol: '+'
+    material: 'YELLOW_STAINED_GLASS_PANE'
+    name: ''
+  members:
+    symbol: 'M'
+    material: 'PLAYER_HEAD'
+    name: '<gradient:#FF9A9E:#FECFEF><b>成员管理</b></gradient>'
+    lore:
+      - '<#67E8F9>查看成员、邀请好友与退出团队'
+      - '<#FFD700>▸ 点击打开成员管理'
+    action: 'menu:members'
+  settings:
+    symbol: 'S'
+    material: 'COMPARATOR'
+    name: '<gradient:#00F2FE:#4FACFE><b>空岛设置</b></gradient>'
+    lore:
+      - '<#67E8F9>管理世界规则与访客互动权限'
+      - '<#FFD700>▸ 点击打开空岛设置'
+    action: 'menu:settings'
+  help:
+    symbol: 'H'
+    material: 'KNOWLEDGE_BOOK'
+    name: '<gradient:#F6D365:#FDA085><b>帮助中心</b></gradient>'
+    lore:
+      - '<#67E8F9>查看玩法说明与生成器全息字开关'
+      - '<#FFD700>▸ 点击打开帮助中心'
+    action: 'menu:help'
+  back:
+    symbol: 'R'
+    material: 'ARROW'
+    name: '<#FBBF24>返回空岛主页'
+    action: 'menu:main'

@@ -1,0 +1,34 @@
+# 五行像素菜单；原生贴图176×108。
+'schema-version': 1
+'title': '<#FFFFFF><font:dreamskyblock_menus:space></font><font:dreamskyblock_menus:menus></font>'
+'rows': 5
+'layout':
+  - 'DDD      '
+  - 'DDD      '
+  - '         '
+  - '         '
+  - 'B        '
+'items':
+  'D':
+    'material': 'PAPER'
+    'name': '<#D7E7C1>石址'
+    'lore':
+      - '<#A8B89C>难度：新手'
+      - '<#A8B89C>类型：服务器常驻副本'
+      - ''
+      - '<#D7E7C1>点击传送到石址'
+    'action':
+      'left': 'menu close
+
+        playerPerform "dungeon enter lost_altar"
+
+        true'
+    'item_model': 'dreamskyblock_menus:hitbox'
+  'B':
+    'material': 'PAPER'
+    'name': '<#D7E7C1>返回传送菜单'
+    'action':
+      'left': 'menu open "传送"
+
+        true'
+    'item_model': 'dreamskyblock_menus:hitbox'
